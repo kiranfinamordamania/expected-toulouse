@@ -1,3 +1,20 @@
 {
-  "matches": []
+  "matches": [
+    {
+      "week": 1,
+      "team": 2,
+      "opponent": 0,
+      "opponentName": "Inter YaVan FC",
+      "goals": [
+        {
+          "scorer": "Potter",
+          "assist": "Will"
+        },
+        {
+          "scorer": "Luca",
+          "assist": ""
+        }
+      ]
+    }
+  ]
 }

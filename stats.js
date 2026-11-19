@@ -74,11 +74,10 @@ const editorTokenKey = 'expected-toulouse:editor-token:v1';
 const resultsEndpoint = 'https://api.github.com/repos/kiranfinamordamania/expected-toulouse/contents/matches.json';
 const resultsBranch = 'match-data';
 const uncredited = 'uncredited';
-const legacySeason = 2026;
 const maxCommentLength = 500;
 const commentsHashPrefix = '#manager-comments=';
-const seasonFilter = document.querySelector('#season-filter');
-const matchSeasonInput = document.querySelector('#match-season');
+const termFilter = document.querySelector('#term-filter');
+const matchTermInput = document.querySelector('#match-term');
 const competitionInput = document.querySelector('#match-competition');
 const entryGate = document.querySelector('#entry-gate');
 const entryForms = document.querySelector('#entry-forms');
@@ -114,7 +113,7 @@ let squadStats = emptySquadStats();
 let openProfile;
 let commentsPlayer;
 let draft;
-let activeSeason;
+let activeTerm;
 let editorToken = '';
 let editorAction;
 let connecting = false;
@@ -135,17 +134,15 @@ function inRange(number, min, max) {
   return Number.isInteger(number) && number >= min && number <= max;
 }
 
-function seasonLabel(year) {
-  return `${year}/${String(year + 1).slice(-2)}`;
-}
-
-function matchSeason(match) { return match.season ?? legacySeason; }
+function matchTerm(match) { return match.term ?? 1; }
+function termLabel(term) { return `Term ${term}`; }
 function matchCompetition(match) { return match.competition ?? 'league'; }
-function matchKey(match) { return `${matchSeason(match)}:${matchCompetition(match)}:${match.week}`; }
+function matchKey(match) { return `${matchTerm(match)}:${matchCompetition(match)}:${match.week}`; }
 function matchLabel(match) { return `${matchCompetition(match) === 'cup' ? 'Cup game' : 'Gameweek'} ${match.week}`; }
+function matchTermLabel(match) { return `${matchLabel(match)} · ${termLabel(matchTerm(match))}`; }
 
 function sortMatches(records) {
-  return records.sort((first, second) => matchSeason(second) - matchSeason(first)
+  return records.sort((first, second) => matchTerm(second) - matchTerm(first)
     || second.week - first.week || matchCompetition(second).localeCompare(matchCompetition(first)));
 }
 
@@ -164,7 +161,7 @@ function validManagerComments(comments) {
 
 function validMatch(match) {
   return match && inRange(match.week, 1, 999)
-    && (match.season === undefined || inRange(match.season, 1900, 9998))
+    && (match.term === undefined || inRange(match.term, 1, 2))
     && (match.competition === undefined || ['league', 'cup'].includes(match.competition))
     && inRange(match.team, 0, 99) && inRange(match.opponent, 0, 99)
     && typeof match.opponentName === 'string' && match.opponentName.trim().length > 0 && match.opponentName.length <= 100
@@ -247,7 +244,7 @@ async function writeSharedMatch(match, baseline, replacement) {
         body: JSON.stringify({
           branch: resultsBranch,
           sha,
-          message: `${replacement ? 'Save' : 'Delete'} ${matchLabel(match).toLowerCase()} · ${seasonLabel(matchSeason(match))}`,
+          message: `${replacement ? 'Save' : 'Delete'} ${matchTermLabel(match).toLowerCase()}`,
           content: encodeResults(updated)
         })
       });
@@ -322,12 +319,12 @@ function renderManagerComments() {
   const records = matches.filter(match => match.managerComments?.[commentsPlayer]);
   const history = document.querySelector('#player-comment-history');
   const entries = document.createDocumentFragment();
-  let season;
+  let term;
   for (const match of records) {
-    const year = matchSeason(match);
-    if (year !== season) {
-      entries.append(element('h3', seasonLabel(year)));
-      season = year;
+    const currentTerm = matchTerm(match);
+    if (currentTerm !== term) {
+      entries.append(element('h3', termLabel(currentTerm)));
+      term = currentTerm;
     }
     const entry = element('article', undefined, 'manager-comment');
     entry.append(element('h4', `${matchLabel(match)} · vs ${match.opponentName}`),
@@ -401,18 +398,18 @@ function renderHistory(container, records, editable = false) {
     const actions = element('div', undefined, 'match-card-actions');
     const score = element('p', undefined, 'match-score');
     score.append('Expected Toulouse ', element('strong', `${match.team}–${match.opponent}`), ` ${match.opponentName}`);
-    title.append(element('h3', matchLabel(match)), score);
+    title.append(element('h3', matchTermLabel(match)), score);
     top.append(title);
     if (editable) {
       const edit = element('button', 'Edit', 'secondary');
       edit.type = 'button';
-      edit.setAttribute('aria-label', `Edit ${matchLabel(match).toLowerCase()}`);
+      edit.setAttribute('aria-label', `Edit ${matchTermLabel(match).toLowerCase()}`);
       edit.dataset.match = matchKey(match);
       actions.append(edit);
     }
     const remove = element('button', 'Delete', 'secondary remove-match');
     remove.type = 'button';
-    remove.setAttribute('aria-label', `Delete ${matchLabel(match).toLowerCase()}${editable ? '' : ' from this browser'}`);
+    remove.setAttribute('aria-label', `Delete ${matchTermLabel(match).toLowerCase()}${editable ? '' : ' from this browser'}`);
     remove.addEventListener('click', () => confirmDelete(match, !editable));
     actions.append(remove);
     top.append(actions);
@@ -446,16 +443,12 @@ function renderLeader(stats, metric, id, unit) {
 }
 
 function render() {
-  const seasons = [...new Set([legacySeason, ...matches.map(matchSeason)])].sort((first, second) => second - first);
-  activeSeason ??= seasons[0];
-  if (!seasons.includes(activeSeason)) seasons.unshift(activeSeason);
-  seasonFilter.replaceChildren(...seasons.map(year => makeOption(seasonLabel(year), year)));
-  seasonFilter.value = activeSeason;
-  const seasonMatches = matches.filter(match => matchSeason(match) === activeSeason);
+  termFilter.value = activeTerm ?? '';
+  const visibleMatches = activeTerm ? matches.filter(match => matchTerm(match) === activeTerm) : matches;
   const stats = emptySquadStats();
   const keeperMatches = [];
   let goals = 0;
-  for (const match of seasonMatches) {
+  for (const match of visibleMatches) {
     const participants = new Set(match.lineup);
     goals += match.team;
     if (match.team > 0 && match.opponent === 0) keeperMatches.push(match);
@@ -481,14 +474,15 @@ function render() {
   renderLeader(stats, 'assists', 'top-assister', 'assist');
   document.querySelector('#keeper-counter').textContent = keeperMatches.length;
   const list = document.querySelector('#keeper-matches');
-  list.replaceChildren(...keeperMatches.map(match => element('li', `${matchLabel(match)} · ${scoreLine(match)}`)));
+  list.replaceChildren(...keeperMatches.map(match => element('li', `${matchTermLabel(match)} · ${scoreLine(match)}`)));
   list.hidden = keeperMatches.length === 0;
   renderSquad(stats);
   if (profileDialog.open && openProfile) renderProfile(openProfile);
   if (commentsPlayer) renderManagerComments();
-  renderHistory(history, seasonMatches, true);
-  emptyLog.hidden = seasonMatches.length > 0 && !loadFailed;
-  emptyLog.textContent = loadFailed ? 'Could not load the latest shared results. Try Refresh results.' : 'No matches recorded for this season yet.';
+  renderHistory(history, visibleMatches, true);
+  emptyLog.hidden = visibleMatches.length > 0 && !loadFailed;
+  emptyLog.textContent = loadFailed ? 'Could not load the latest shared results. Try Refresh results.'
+    : activeTerm ? `No matches recorded for ${termLabel(activeTerm)} yet.` : 'No matches recorded yet.';
 }
 
 function setFeedback(message) {
@@ -514,12 +508,11 @@ function showScoreForm(moveFocus = false) {
 }
 
 function loadMatch(identity) {
-  const season = matchSeason(identity);
+  const term = matchTerm(identity);
   const competition = matchCompetition(identity);
   const { week } = identity;
   const existing = matches.find(match => matchKey(match) === matchKey(identity));
-  matchSeasonInput.value = season;
-  document.querySelector('#season-preview').textContent = seasonLabel(season);
+  matchTermInput.value = term;
   competitionInput.value = competition;
   document.querySelector('#gameweek-label').textContent = competition === 'cup' ? 'Cup game number' : 'Gameweek';
   weekInput.value = week;
@@ -527,22 +520,22 @@ function loadMatch(identity) {
   opponentInput.value = existing?.opponent ?? '';
   opponentNameInput.value = existing?.opponentName ?? '';
   scoreHeading.textContent = existing ? `Edit ${matchLabel(existing).toLowerCase()}` : 'Record a match';
-  draft = { season, competition, week, baseline: existing, goals: existing?.goals ?? [], lineup: existing?.lineup ?? [],
+  draft = { term, competition, week, baseline: existing, goals: existing?.goals ?? [], lineup: existing?.lineup ?? [],
     managerComments: existing?.managerComments ?? {} };
   matchComments.open = Boolean(Object.keys(draft.managerComments).length);
   setFeedback('');
   showScoreForm();
 }
 
-function nextMatch(season = activeSeason ?? legacySeason, competition = 'league') {
-  const saved = new Set(matches.filter(match => matchSeason(match) === season && matchCompetition(match) === competition)
+function nextMatch(term = activeTerm ?? matchTerm(matches[0] ?? {}), competition = 'league') {
+  const saved = new Set(matches.filter(match => matchTerm(match) === term && matchCompetition(match) === competition)
     .map(match => match.week));
   let week = Math.max(0, ...saved) + 1;
   if (week > 999) {
     week = 1;
     while (week < 999 && saved.has(week)) week += 1;
   }
-  return { season, competition, week };
+  return { term, competition, week };
 }
 
 function makeOption(label, value = label) {
@@ -624,31 +617,24 @@ function draftManagerComments() {
 }
 
 function readMatchIdentity() {
-  return { season: matchSeasonInput.valueAsNumber, competition: competitionInput.value, week: weekInput.valueAsNumber };
+  return { term: Number(matchTermInput.value), competition: competitionInput.value, week: weekInput.valueAsNumber };
 }
 
 function reloadEntryIdentity() {
-  const { season, competition } = readMatchIdentity();
-  if (inRange(season, 1900, 9998)) loadMatch(nextMatch(season, competition));
+  const { term, competition } = readMatchIdentity();
+  if (inRange(term, 1, 2)) loadMatch(nextMatch(term, competition));
 }
 
-matchSeasonInput.addEventListener('input', () => {
-  const year = matchSeasonInput.valueAsNumber;
-  if (!inRange(year, 1900, 9998)) {
-    document.querySelector('#season-preview').textContent = '';
-  } else if (draft?.season !== year) {
-    reloadEntryIdentity();
-  }
-});
+matchTermInput.addEventListener('change', reloadEntryIdentity);
 competitionInput.addEventListener('change', reloadEntryIdentity);
 weekInput.addEventListener('input', () => {
   const identity = readMatchIdentity();
-  if (inRange(identity.season, 1900, 9998) && inRange(identity.week, 1, 999)
+  if (inRange(identity.term, 1, 2) && inRange(identity.week, 1, 999)
     && (!draft || matchKey(identity) !== matchKey(draft))) loadMatch(identity);
 });
 
-seasonFilter.addEventListener('change', () => {
-  activeSeason = Number(seasonFilter.value);
+termFilter.addEventListener('change', () => {
+  activeTerm = termFilter.value ? Number(termFilter.value) : undefined;
   render();
   if (editorToken && !scoreForm.hidden && !draft?.baseline && !opponentNameInput.value && teamInput.value === '' && opponentInput.value === '') {
     loadMatch(nextMatch());
@@ -662,7 +648,7 @@ scoreForm.addEventListener('submit', event => {
   const team = teamInput.valueAsNumber;
   const opponent = opponentInput.valueAsNumber;
   const opponentName = opponentNameInput.value.trim();
-  if (!inRange(identity.season, 1900, 9998) || !inRange(identity.week, 1, 999)
+  if (!inRange(identity.term, 1, 2) || !inRange(identity.week, 1, 999)
     || !inRange(team, 0, 99) || !inRange(opponent, 0, 99)) return;
   if (!opponentName) {
     setFeedback('Enter the opponent’s name.');
@@ -678,7 +664,7 @@ scoreForm.addEventListener('submit', event => {
   goalFields.replaceChildren(...Array.from({ length: team }, (_, index) => makeGoalFields(index, goals[index])));
   renderLineup(lineup);
   renderCommentFields(managerComments);
-  document.querySelector('#match-score').textContent = `${seasonLabel(draft.season)} · ${matchLabel(draft)} · ${scoreLine(draft)}`;
+  document.querySelector('#match-score').textContent = `${matchTermLabel(draft)} · ${scoreLine(draft)}`;
   document.querySelector('#no-goals').hidden = team > 0;
   detailsHeading.textContent = team > 0 ? 'Assign goals' : 'Confirm match';
   setFeedback('');
@@ -727,17 +713,17 @@ async function updateSharedHistory(match, baseline, replacement, report) {
 }
 
 async function publishMatch() {
-  const { season, competition, week, team, opponent, opponentName, baseline } = draft;
-  const match = { season, competition, week, team, opponent, opponentName, goals: draftGoals() };
+  const { term, competition, week, team, opponent, opponentName, baseline } = draft;
+  const match = { term, competition, week, team, opponent, opponentName, goals: draftGoals() };
   const lineup = draftLineup();
   if (lineup.length) match.lineup = lineup;
   const managerComments = draftManagerComments();
   if (Object.keys(managerComments).length) match.managerComments = managerComments;
   if (!validMatch(match) || !await updateSharedHistory(match, baseline, match, setFeedback)) return;
-  activeSeason = season;
+  if (activeTerm) activeTerm = term;
   render();
-  loadMatch(nextMatch(season, competition));
-  setFeedback(`${matchLabel(match)} saved to the shared history.`);
+  loadMatch(nextMatch(term, competition));
+  setFeedback(`${matchTermLabel(match)} saved to the shared history.`);
   scoreHeading.focus();
 }
 
@@ -846,7 +832,7 @@ function confirmDelete(match, local) {
   if (saving) return;
   setHistoryFeedback('');
   deleteTarget = { match, local };
-  document.querySelector('#delete-score').textContent = `${seasonLabel(matchSeason(match))} · ${matchLabel(match)} · ${scoreLine(match)}`;
+  document.querySelector('#delete-score').textContent = `${matchTermLabel(match)} · ${scoreLine(match)}`;
   document.querySelector('#delete-scope').textContent = local
     ? 'This removes the result from this browser.'
     : 'This removes the result from the shared history and recalculates the stats.';
@@ -855,9 +841,9 @@ function confirmDelete(match, local) {
 
 async function deleteSharedMatch(match) {
   if (!await updateSharedHistory(match, match, undefined, setHistoryFeedback)) return;
-  if (draft && matchKey(draft) === matchKey(match)) loadMatch(nextMatch(matchSeason(match), matchCompetition(match)));
+  if (draft && matchKey(draft) === matchKey(match)) loadMatch(nextMatch(matchTerm(match), matchCompetition(match)));
   render();
-  setHistoryFeedback(`${matchLabel(match)} removed from the shared history.`);
+  setHistoryFeedback(`${matchTermLabel(match)} removed from the shared history.`);
   historyHeading.focus();
 }
 

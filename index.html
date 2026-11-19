@@ -9,7 +9,7 @@
   <title>Expected Toulouse · Match Stats</title>
   <link rel="icon" href="./expected-toulouse-crest.png" type="image/png">
   <link rel="stylesheet" href="./styles.css?v=manager-comments-1">
-  <script src="./stats.js?v=manager-comments-1" defer></script>
+  <script src="./stats.js?v=terms-1" defer></script>
 </head>
 <body>
   <header class="masthead">
@@ -24,7 +24,14 @@
 
   <main class="wrap">
     <section class="season-overview" aria-label="Team totals and leaders">
-      <div class="season-filter"><label for="season-filter">Season</label><select id="season-filter"><option value="2026">2026/27</option></select></div>
+      <div class="season-filter">
+        <label for="term-filter">Stats period</label>
+        <select id="term-filter">
+          <option value="">All stats</option>
+          <option value="1">Term 1</option>
+          <option value="2">Term 2</option>
+        </select>
+      </div>
       <dl class="stats-strip">
         <div class="stat"><dt>Team goals</dt><dd id="team-goals">0</dd></div>
         <div class="stat"><dt>Clean sheets</dt><dd id="team-clean-sheets">0</dd></div>
@@ -53,7 +60,7 @@
             <form id="score-form">
               <h2 id="score-heading" tabindex="-1">Record a match</h2>
               <div class="score-fields">
-                <label>Season start year<input id="match-season" type="number" min="1900" max="9998" step="1" inputmode="numeric" aria-describedby="season-preview" required><span id="season-preview" class="field-help" aria-hidden="true"></span></label>
+                <label>Season<select id="match-term"><option value="1">Term 1</option><option value="2">Term 2</option></select></label>
                 <label>Competition<select id="match-competition"><option value="league">League</option><option value="cup">Cup</option></select></label>
                 <label><span id="gameweek-label">Gameweek</span><input id="gameweek" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" required></label>
                 <label>Opponent name<input id="opponent-name" type="text" maxlength="100" placeholder="e.g. Riverside FC" required></label>

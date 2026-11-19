@@ -250,7 +250,6 @@ function playerLabel(player) {
     profileDialog.showModal();
   });
   identity.append(profile);
-  if (player === 'Zach') identity.append(element('span', 'GK', 'keeper-tag'));
   return identity;
 }
 
@@ -324,6 +323,9 @@ function renderSquad(stats) {
     heading.scope = 'row';
     heading.append(playerLabel(player));
     row.append(heading);
+    const { position, number } = playerProfiles[player];
+    row.insertCell().textContent = position ?? '—';
+    row.insertCell().textContent = number ?? '—';
     row.insertCell().textContent = stats.get(player).goals;
     row.insertCell().textContent = stats.get(player).assists;
     rows.append(row);

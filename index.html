@@ -8,8 +8,8 @@
   <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
   <title>Expected Toulouse · Match Stats</title>
   <link rel="icon" href="./expected-toulouse-crest.png" type="image/png">
-  <link rel="stylesheet" href="./styles.css?v=profile-photos-2">
-  <script src="./stats.js?v=player-positions-1" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=squad-columns-1">
+  <script src="./stats.js?v=squad-columns-1" defer></script>
 </head>
 <body>
   <header class="masthead">
@@ -104,9 +104,15 @@
           <h2>Squad Stats</h2>
           <p>10 players</p>
         </div>
-        <table>
+        <table class="squad-table">
           <thead>
-            <tr><th scope="col">Player</th><th scope="col">Goals</th><th scope="col">Assists</th></tr>
+            <tr>
+              <th scope="col">Player</th>
+              <th scope="col">Position</th>
+              <th scope="col">Squad No.</th>
+              <th scope="col">Goals</th>
+              <th scope="col">Assists</th>
+            </tr>
           </thead>
           <tbody id="players"></tbody>
         </table>

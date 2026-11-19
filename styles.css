@@ -244,6 +244,11 @@ tbody tr { border-bottom: 1px solid var(--line); }
 tbody tr:last-child { border-bottom: 0; }
 tbody th { text-align: left; padding: .72rem .75rem; }
 td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.squad-table thead th:first-child { width: 25%; }
+.squad-table thead th:nth-child(2) { width: 26%; }
+.squad-table thead th:nth-child(3) { width: 19%; }
+.squad-table thead th:nth-child(4) { width: 14%; }
+.squad-table tbody td:nth-child(2) { font-weight: 400; }
 .injuries-table th, .injuries-table td { text-align: left; padding-inline: .75rem; }
 .injuries-table td { font-weight: 400; }
 .player { display: flex; align-items: center; gap: .45rem; line-height: 1.2; }
@@ -319,6 +324,7 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 
 @media (max-width: 42rem) {
   .wrap { width: calc(100% - 2rem); }
+  .squad-table th, .squad-table td { font-size: .8rem; padding-inline: .25rem; }
   .masthead-inner { min-height: 7.5rem; }
   .masthead-inner::after { right: -.75rem; }
   .masthead-subtitle { font-size: .875rem; }

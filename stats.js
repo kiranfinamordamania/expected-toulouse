@@ -993,6 +993,10 @@ document.addEventListener('visibilitychange', () => {
 renderLocalHistory();
 renderSquad(squadStats);
 renderInjuries();
+const leagueKickoff = document.querySelector('#league-fixture-kickoff');
+if (leagueKickoff && Date.parse(leagueKickoff.dateTime) <= Date.now()) {
+  document.querySelector('#league-fixture-heading').textContent = 'Listed fixture';
+}
 syncViewFromHash();
 window.addEventListener('hashchange', syncViewFromHash);
 void refreshResults();

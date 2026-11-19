@@ -102,6 +102,21 @@ button:disabled { opacity: .65; cursor: wait; }
 .leader span { color: var(--muted); display: block; margin-top: .25rem; font-size: .875rem; }
 .leader span:empty { display: none; }
 
+.league-update {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem clamp(.85rem, 4vw, 2rem);
+  padding: .95rem 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: .875rem;
+  line-height: 1.4;
+}
+.league-update h2 { font: inherit; font-weight: 700; color: var(--muted); }
+.league-highlight { color: var(--violet); font: 700 clamp(1.35rem, 3vw, 1.75rem)/1.1 var(--display); margin: .2rem 0; }
+.league-update a { display: inline-block; margin-top: .25rem; color: var(--violet); }
+.league-checked { grid-column: 1 / -1; font-size: .8rem; }
+
 main.wrap { padding-bottom: 2.8rem; }
 .tab-bar {
   display: flex;

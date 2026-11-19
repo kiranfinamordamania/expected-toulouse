@@ -207,11 +207,15 @@ input, select {
 }
 input:focus-visible, select:focus-visible { outline: 2px solid #743fad; outline-offset: 2px; }
 select:disabled { color: var(--muted); background: #f4f0f8; }
-.primary, .secondary { min-height: 2.75rem; padding: .55rem .9rem; border: 1px solid #5b3289; border-radius: .48rem; font-weight: 750; }
+.primary, .secondary, .danger { min-height: 2.75rem; padding: .55rem .9rem; border: 1px solid #5b3289; border-radius: .48rem; font-weight: 750; }
 .primary { color: #fff; background: #542d86; }
 .primary:hover { background: #3a1e61; }
 .secondary { color: #542d86; background: #f7f1fb; border-color: #e3d6ed; }
 .secondary:hover { background: #eee1f8; }
+.remove-match { color: #8a254b; background: #fff5f8; border-color: #efd7e0; }
+.remove-match:hover { background: #f9e5ed; }
+.danger { color: #fff; background: #8a254b; border-color: #8a254b; }
+.danger:hover { background: #691a37; border-color: #691a37; }
 button:disabled { opacity: .65; cursor: wait; }
 .form-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .85rem; }
 .goal-fields { display: grid; gap: .7rem; margin-top: .65rem; }
@@ -225,7 +229,8 @@ button:disabled { opacity: .65; cursor: wait; }
 .match-log-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .65rem; }
 .match-card { padding: .75rem 0; border-bottom: 1px solid var(--line); }
 .match-card:last-child { border-bottom: 0; padding-bottom: 0; }
-.match-card-top { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.match-card-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
+.match-card-actions { display: flex; gap: .45rem; }
 .match-card h3 { margin: 0 0 .2rem; font-size: 1rem; }
 .match-card details { margin-top: .65rem; }
 .match-card summary, #local-history > summary { color: var(--violet); font-size: .9rem; font-weight: 700; cursor: pointer; }
@@ -239,9 +244,9 @@ button:disabled { opacity: .65; cursor: wait; }
 .keeper-matches { margin: 0; padding: 0 1.2rem .85rem 2.35rem; }
 .keeper-matches li + li { margin-top: .3rem; }
 .save-note { padding: .7rem 1.2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .875rem; }
-#editor-dialog { width: min(100% - 2rem, 29rem); padding: 1.2rem; border: 1px solid var(--line); border-radius: .9rem; color: inherit; }
-#editor-dialog::backdrop { background: #24133999; }
-#editor-form p, #editor-form label { margin-top: .75rem; }
+#editor-dialog, #delete-dialog { width: min(100% - 2rem, 29rem); padding: 1.2rem; border: 1px solid var(--line); border-radius: .9rem; color: inherit; }
+#editor-dialog::backdrop, #delete-dialog::backdrop { background: #24133999; }
+#editor-form p, #editor-form label, #delete-dialog p { margin-top: .75rem; }
 #editor-form p { line-height: 1.45; }
 #editor-form a { color: var(--violet); font-weight: 700; }
 

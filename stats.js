@@ -16,15 +16,20 @@ const opponentNameInput = document.querySelector('#opponent-name');
 const feedback = document.querySelector('#match-feedback');
 const goalFields = document.querySelector('#goal-fields');
 const history = document.querySelector('#week-log');
+const historyHeading = document.querySelector('#history-heading');
+const historyFeedback = document.querySelector('#history-feedback');
 const emptyLog = document.querySelector('#empty-log');
 const refreshButton = document.querySelector('#refresh-results');
 const saveButton = document.querySelector('#save-match');
 const editorDialog = document.querySelector('#editor-dialog');
 const editorTokenInput = document.querySelector('#editor-token');
+const deleteDialog = document.querySelector('#delete-dialog');
 let matches = [];
 let draft;
 let loadedWeek;
 let editorToken = '';
+let editorAction;
+let deleteTarget;
 let saving = false;
 let resultsVersion = 0;
 let lastRefresh = 0;
@@ -107,16 +112,16 @@ function encodeResults(records) {
   return btoa(binary);
 }
 
-async function saveSharedMatch(match, baseline) {
+async function writeSharedMatch(week, baseline, replacement) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const { sha, records } = await readSharedResults(editorToken);
-    const current = records.find(record => record.week === match.week);
-    if (JSON.stringify(current) === JSON.stringify(match)) return records;
+    const current = records.find(record => record.week === week);
+    if (JSON.stringify(current) === JSON.stringify(replacement)) return records;
     if (JSON.stringify(current) !== JSON.stringify(baseline)) {
       throw Object.assign(new Error('Gameweek has changed'), { changed: true });
     }
-    const updated = records.filter(record => record.week !== match.week);
-    updated.push(match);
+    const updated = records.filter(record => record.week !== week);
+    if (replacement) updated.push(replacement);
     updated.sort((first, second) => second.week - first.week);
     try {
       await githubRequest(resultsEndpoint, {
@@ -125,7 +130,7 @@ async function saveSharedMatch(match, baseline) {
         body: JSON.stringify({
           branch: resultsBranch,
           sha,
-          message: `Save Expected Toulouse gameweek ${match.week}`,
+          message: `${replacement ? 'Save' : 'Delete'} Expected Toulouse gameweek ${week}`,
           content: encodeResults(updated)
         })
       });
@@ -172,6 +177,7 @@ function renderHistory(container, records, editable = false) {
     const card = element('article', undefined, 'match-card');
     const top = element('div', undefined, 'match-card-top');
     const title = element('div');
+    const actions = element('div', undefined, 'match-card-actions');
     title.append(element('h3', `Gameweek ${match.week}`), element('p', scoreLine(match), 'match-score'));
     top.append(title);
     if (editable) {
@@ -179,8 +185,14 @@ function renderHistory(container, records, editable = false) {
       edit.type = 'button';
       edit.setAttribute('aria-label', `Edit gameweek ${match.week}`);
       edit.dataset.week = match.week;
-      top.append(edit);
+      actions.append(edit);
     }
+    const remove = element('button', 'Delete', 'secondary remove-match');
+    remove.type = 'button';
+    remove.setAttribute('aria-label', `Delete gameweek ${match.week}${editable ? '' : ' from this browser'}`);
+    remove.addEventListener('click', () => confirmDelete(match, !editable));
+    actions.append(remove);
+    top.append(actions);
     card.append(top);
 
     if (match.goals.length) {
@@ -228,6 +240,17 @@ function render() {
 function setFeedback(message) {
   feedback.textContent = message;
   feedback.hidden = message === '';
+}
+
+function setHistoryFeedback(message) {
+  historyFeedback.textContent = message;
+  historyFeedback.hidden = message === '';
+}
+
+function renderLocalHistory() {
+  const previous = readPreviousMatches();
+  document.querySelector('#local-history').hidden = previous.length === 0;
+  renderHistory(document.querySelector('#local-results'), previous);
 }
 
 function showScoreForm(moveFocus = false) {
@@ -339,55 +362,110 @@ document.querySelector('#change-score').addEventListener('click', () => {
   showScoreForm(true);
 });
 
-async function publishMatch() {
-  if (saving) return;
-  const { week, team, opponent, opponentName, baseline } = draft;
-  const match = { week, team, opponent, opponentName, goals: draftGoals() };
-  if (!validMatch(match)) return;
+async function updateSharedHistory(week, baseline, replacement, report) {
+  if (saving) return false;
+  const action = replacement ? 'save' : 'delete';
   saving = true;
   resultsVersion += 1;
   saveButton.disabled = true;
-  setFeedback('Saving to GitHub…');
+  report(replacement ? 'Saving to GitHub…' : 'Deleting from shared history…');
   try {
-    matches = await saveSharedMatch(match, baseline);
+    matches = await writeSharedMatch(week, baseline, replacement);
     loadFailed = false;
     render();
-    loadWeek(nextWeek());
-    setFeedback(`Gameweek ${week} saved to the shared history.`);
-    scoreHeading.focus();
+    return true;
   } catch (error) {
     if (error.changed) {
-      setFeedback('This gameweek changed. Refresh results, then reopen it from Match history before editing.');
+      report('This gameweek changed. Refresh results and check the latest score before trying again.');
     } else if ([401, 403, 404].includes(error.status)) {
       editorToken = '';
-      setFeedback('GitHub did not allow this save. Check that your token has Contents: Read and write for expected-toulouse, then try again.');
+      report(`GitHub did not allow this ${action === 'save' ? 'save' : 'deletion'}. Check that your token has Contents: Read and write for expected-toulouse, then try again.`);
     } else {
-      setFeedback('Could not save to GitHub. Your entry is still here. Try saving again.');
+      report(`Could not ${action} the match on GitHub. Try again.`);
     }
+    return false;
   } finally {
     saving = false;
     saveButton.disabled = false;
   }
 }
 
-goalsForm.addEventListener('submit', event => {
-  event.preventDefault();
+async function publishMatch() {
+  const { week, team, opponent, opponentName, baseline } = draft;
+  const match = { week, team, opponent, opponentName, goals: draftGoals() };
+  if (!validMatch(match) || !await updateSharedHistory(week, baseline, match, setFeedback)) return;
+  loadWeek(nextWeek());
+  setFeedback(`Gameweek ${week} saved to the shared history.`);
+  scoreHeading.focus();
+}
+
+function withEditorAccess(action, request) {
   if (saving) return;
-  if (!editorToken) {
-    editorDialog.showModal();
+  if (editorToken) {
+    void request();
     return;
   }
-  void publishMatch();
+  editorAction = request;
+  document.querySelector('#editor-title').textContent = `Connect GitHub to ${action}`;
+  document.querySelector('#connect-editor').textContent = `Connect and ${action} match`;
+  editorDialog.showModal();
+}
+
+goalsForm.addEventListener('submit', event => {
+  event.preventDefault();
+  withEditorAccess('save', publishMatch);
 });
 
 document.querySelector('#editor-form').addEventListener('submit', event => {
   event.preventDefault();
   editorToken = editorTokenInput.value.trim();
+  const request = editorAction;
   editorDialog.close();
-  void publishMatch();
+  if (request) void request();
 });
-editorDialog.addEventListener('close', () => { editorTokenInput.value = ''; });
+editorDialog.addEventListener('close', () => {
+  editorTokenInput.value = '';
+  editorAction = undefined;
+});
 document.querySelector('#cancel-editor').addEventListener('click', () => editorDialog.close());
+
+function confirmDelete(match, local) {
+  if (saving) return;
+  setHistoryFeedback('');
+  deleteTarget = { match, local };
+  document.querySelector('#delete-score').textContent = `Gameweek ${match.week} · ${scoreLine(match)}`;
+  document.querySelector('#delete-scope').textContent = local
+    ? 'This removes the result from this browser.'
+    : 'This removes the result from the shared history and recalculates the stats.';
+  deleteDialog.showModal();
+}
+
+async function deleteSharedMatch(match) {
+  if (!await updateSharedHistory(match.week, match, undefined, setHistoryFeedback)) return;
+  if (draft?.week === match.week) loadWeek(nextWeek());
+  setHistoryFeedback(`Gameweek ${match.week} removed from the shared history.`);
+  historyHeading.focus();
+}
+
+function deleteLocalMatch(match) {
+  try {
+    localStorage.removeItem(previousMatchPrefix + match.week);
+    renderLocalHistory();
+    setHistoryFeedback(`Gameweek ${match.week} removed from this browser.`);
+    historyHeading.focus();
+  } catch {
+    setHistoryFeedback('Could not remove the result from this browser. Try again.');
+  }
+}
+
+document.querySelector('#cancel-delete').addEventListener('click', () => deleteDialog.close());
+document.querySelector('#confirm-delete').addEventListener('click', () => {
+  const { match, local } = deleteTarget;
+  deleteDialog.close();
+  if (local) deleteLocalMatch(match);
+  else withEditorAccess('delete', () => deleteSharedMatch(match));
+});
+deleteDialog.addEventListener('close', () => { deleteTarget = undefined; });
 
 const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
 function selectTab(selectedTab) {
@@ -447,10 +525,6 @@ refreshButton.addEventListener('click', () => void refreshResults());
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && Date.now() - lastRefresh >= 30000) void refreshResults();
 });
-const previousMatches = readPreviousMatches();
-if (previousMatches.length) {
-  document.querySelector('#local-history').hidden = false;
-  renderHistory(document.querySelector('#local-results'), previousMatches);
-}
+renderLocalHistory();
 renderSquad(new Map(players.map(player => [player, { goals: 0, assists: 0 }])));
 void refreshResults();

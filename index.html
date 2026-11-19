@@ -7,8 +7,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
   <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
   <title>Expected Toulouse · Match Stats</title>
-  <link rel="stylesheet" href="./styles.css?v=shared-1">
-  <script src="./stats.js?v=shared-1" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=delete-1">
+  <script src="./stats.js?v=delete-1" defer></script>
 </head>
 <body>
   <header class="hero">
@@ -63,9 +63,10 @@
 
         <div class="match-log">
           <div class="match-log-heading">
-            <h2>Match history</h2>
+            <h2 id="history-heading" tabindex="-1">Match history</h2>
             <button class="secondary" id="refresh-results" type="button">Refresh results</button>
           </div>
+          <p class="match-feedback" id="history-feedback" role="status" hidden></p>
           <p class="empty-log" id="empty-log">Loading shared results…</p>
           <div id="week-log"></div>
           <details id="local-history" hidden>
@@ -117,10 +118,20 @@
       <label>GitHub editing token<input id="editor-token" type="password" pattern="github_pat_[A-Za-z0-9_]+" autocomplete="off" spellcheck="false" required></label>
       <p>The token is held in this tab until you reload or close it.</p>
       <div class="form-actions">
-        <button class="primary" type="submit">Connect and save match</button>
+        <button class="primary" id="connect-editor" type="submit">Connect and save match</button>
         <button class="secondary" id="cancel-editor" type="button">Cancel</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-score delete-scope">
+    <h2 id="delete-title">Delete match?</h2>
+    <p class="match-score" id="delete-score"></p>
+    <p id="delete-scope"></p>
+    <div class="form-actions">
+      <button class="secondary" id="cancel-delete" type="button" autofocus>Cancel</button>
+      <button class="danger" id="confirm-delete" type="button">Delete match</button>
+    </div>
   </dialog>
 </body>
 </html>

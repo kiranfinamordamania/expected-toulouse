@@ -278,10 +278,25 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 .profile-heading { display: flex; gap: .75rem; align-items: center; }
 .profile-name { flex: 1; }
 #profile-shirt-number { color: var(--muted); font-size: .875rem; margin-top: .25rem; }
-.profile-portrait { width: 4rem; aspect-ratio: 1; flex: none; }
-.profile-portrait img, .profile-portrait span { width: 100%; height: 100%; }
-.profile-portrait img { display: block; object-fit: cover; }
-.profile-portrait span { display: grid; place-items: center; background: var(--wash); color: var(--violet); font: 700 2rem/1 var(--display); }
+.profile-portrait {
+  position: relative;
+  width: 4rem;
+  aspect-ratio: 1;
+  flex: none;
+  overflow: hidden;
+  background: var(--wash);
+}
+.profile-portrait:has(img:not([hidden])) { width: clamp(4.25rem, 21vw, 6.5rem); }
+.profile-portrait img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--photo-width);
+  max-width: none;
+  height: auto;
+  transform: translate(var(--photo-center-x), var(--photo-center-y));
+}
+.profile-portrait span { height: 100%; display: grid; place-items: center; background: var(--wash); color: var(--violet); font: 700 2rem/1 var(--display); }
 .profile-numbers, .profile-details { display: grid; gap: .65rem; border-top: 1px solid var(--line); padding-top: .85rem; margin-top: .9rem; }
 .profile-numbers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .profile-details { grid-template-columns: 1fr 1fr; }

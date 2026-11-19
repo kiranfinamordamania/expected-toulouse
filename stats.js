@@ -1,21 +1,28 @@
 'use strict';
 
 const players = ['Zach', 'Boyce', 'Kiran', 'Ben 2', 'Billy', 'Potter', 'Will', 'James', 'Luca', 'Matty'];
+// Photo crops store the horizontal center, vertical center and rendered width as percentages.
 const playerProfiles = {
   Zach: {
     number: 13,
+    photo: './photos/zach.webp',
+    photoCrop: [37.78, 20.65, 355.26],
     position: 'Goalkeeper',
     bio: 'Wizard in goal, excellent shot stopping, questionable with his feet. Has a bit of a temper.',
     similarPlayer: 'Jordan Pickford'
   },
   Boyce: {
     number: 22,
+    photo: './photos/boyce.webp',
+    photoCrop: [49.26, 44.5, 270],
     injury: { outUntil: 'mid-February 2027', month: '2027-02' },
     bio: 'General at the back, commanding the shape of the defence, can play with the ball at his feet.',
     similarPlayer: 'John Stones'
   },
   Kiran: {
     number: 6,
+    photo: './photos/kiran.webp',
+    photoCrop: [64.8, 30.83, 262.14],
     bio: 'Good on the ball, often shoots wide, can find a pass.',
     similarPlayer: 'Jordan Henderson'
   },
@@ -24,24 +31,30 @@ const playerProfiles = {
     bio: 'Classy footballer. Cool, calm and collected.',
     similarPlayer: 'Michael Carrick'
   },
-  Billy: { number: 2, bio: 'Classic squad player', similarPlayer: 'Phil Neville' },
+  Billy: { number: 2, photo: './photos/billy.webp', photoCrop: [48.89, 40.37, 207.69], bio: 'Classic squad player', similarPlayer: 'Phil Neville' },
   Potter: {
     number: 20,
+    photo: './photos/potter.webp',
+    photoCrop: [47.59, 39.3, 154.29],
     bio: 'Solid player, low energy at points, decent on the ball.',
     similarPlayer: 'Mark Noble'
   },
   Will: {
     number: 67,
+    photo: './photos/will.webp',
+    photoCrop: [53.98, 21.64, 222.12],
     bio: 'Hunger, desire and high energy. Questionable on the ball',
     similarPlayer: 'Joe Allen'
   },
-  James: { number: 53, bio: 'Lack of commitment, always partying.', similarPlayer: 'Joey Barton' },
+  James: { number: 53, photo: './photos/james.webp', photoCrop: [50.19, 32.1, 284.21], bio: 'Lack of commitment, always partying.', similarPlayer: 'Joey Barton' },
   Luca: {
     number: 7,
+    photo: './photos/luca.webp',
+    photoCrop: [49.81, 34.97, 257.14],
     bio: 'Best signing in the clubs history, foot blessed by God.',
     similarPlayer: 'Rayan Cherki'
   },
-  Matty: { number: 3, bio: 'Hunk, ultra slow defender', similarPlayer: 'Per Mertesacker' }
+  Matty: { number: 3, photo: './photos/matty.webp', photoCrop: [46.14, 23.27, 176], bio: 'Hunk, ultra slow defender', similarPlayer: 'Per Mertesacker' }
 };
 const previousMatchPrefix = 'expected-toulouse:matches:v1:';
 const editorTokenKey = 'expected-toulouse:editor-token:v1';
@@ -240,10 +253,14 @@ function emptySquadStats() {
 }
 
 function renderProfile(player) {
-  const { number, position, injury, photo, bio, similarPlayer } = playerProfiles[player] ?? {};
+  const { number, position, injury, photo, photoCrop, bio, similarPlayer } = playerProfiles[player] ?? {};
   const { played, goals, assists, unknown } = squadStats.get(player);
   const image = document.querySelector('#profile-photo');
   const initial = document.querySelector('#profile-initial');
+  const [centerX, centerY, width] = photoCrop ?? [50, 50, 100];
+  image.style.setProperty('--photo-center-x', `-${centerX}%`);
+  image.style.setProperty('--photo-center-y', `-${centerY}%`);
+  image.style.setProperty('--photo-width', `${width}%`);
   if (photo) {
     image.src = photo;
     image.alt = `${player}’s profile photo`;

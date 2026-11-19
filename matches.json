@@ -1,3 +1,20 @@
 {
-  "matches": []
+  "matches": [
+    {
+      "week": 1,
+      "team": 2,
+      "opponent": 0,
+      "opponentName": "test",
+      "goals": [
+        {
+          "scorer": "Boyce",
+          "assist": "Potter"
+        },
+        {
+          "scorer": "Boyce",
+          "assist": "Kiran"
+        }
+      ]
+    }
+  ]
 }

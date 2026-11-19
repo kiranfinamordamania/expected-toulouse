@@ -2,8 +2,46 @@
 
 const players = ['Zach', 'Boyce', 'Kiran', 'Ben 2', 'Billy', 'Potter', 'Will', 'James', 'Luca', 'Matty'];
 const playerProfiles = {
-  Zach: { position: 'Goalkeeper' },
-  Boyce: { injury: { outUntil: 'mid-February 2027', month: '2027-02' } }
+  Zach: {
+    number: 13,
+    position: 'Goalkeeper',
+    bio: 'Wizard in goal, excellent shot stopping, questionable with his feet. Has a bit of a temper.',
+    similarPlayer: 'Jordan Pickford'
+  },
+  Boyce: {
+    number: 22,
+    injury: { outUntil: 'mid-February 2027', month: '2027-02' },
+    bio: 'General at the back, commanding the shape of the defence, can play with the ball at his feet.',
+    similarPlayer: 'John Stones'
+  },
+  Kiran: {
+    number: 6,
+    bio: 'Good on the ball, often shoots wide, can find a pass.',
+    similarPlayer: 'Jordan Henderson'
+  },
+  'Ben 2': {
+    number: 8,
+    bio: 'Classy footballer. Cool, calm and collected.',
+    similarPlayer: 'Michael Carrick'
+  },
+  Billy: { number: 2, bio: 'Classic squad player', similarPlayer: 'Phil Neville' },
+  Potter: {
+    number: 20,
+    bio: 'Solid player, low energy at points, decent on the ball.',
+    similarPlayer: 'Mark Noble'
+  },
+  Will: {
+    number: 67,
+    bio: 'Hunger, desire and high energy. Questionable on the ball',
+    similarPlayer: 'Joe Allen'
+  },
+  James: { number: 53, bio: 'Lack of commitment, always partying.', similarPlayer: 'Joey Barton' },
+  Luca: {
+    number: 7,
+    bio: 'Best signing in the clubs history, foot blessed by God.',
+    similarPlayer: 'Rayan Cherki'
+  },
+  Matty: { number: 3, bio: 'Hunk, ultra slow defender', similarPlayer: 'Per Mertesacker' }
 };
 const previousMatchPrefix = 'expected-toulouse:matches:v1:';
 const resultsEndpoint = 'https://api.github.com/repos/kiranfinamordamania/expected-toulouse/contents/matches.json';
@@ -171,7 +209,7 @@ function emptySquadStats() {
 }
 
 function renderProfile(player) {
-  const { position, injury, photo, bio } = playerProfiles[player] ?? {};
+  const { number, position, injury, photo, bio, similarPlayer } = playerProfiles[player] ?? {};
   const { played, goals, assists, unknown } = squadStats.get(player);
   const image = document.querySelector('#profile-photo');
   const initial = document.querySelector('#profile-initial');
@@ -187,12 +225,17 @@ function renderProfile(player) {
   initial.textContent = player === 'Ben 2' ? 'B2' : player[0];
 
   document.querySelector('#profile-title').textContent = player;
+  const shirtNumber = document.querySelector('#profile-shirt-number');
+  shirtNumber.textContent = number == null ? '' : `Shirt number ${number}`;
+  shirtNumber.hidden = number == null;
   document.querySelector('#profile-played').textContent = played;
   document.querySelector('#profile-goals').textContent = goals;
   document.querySelector('#profile-assists').textContent = assists;
   document.querySelector('#profile-position').textContent = position ?? 'Not set';
   document.querySelector('#profile-injury').textContent = injury ? `Out until ${injury.outUntil}` : 'No injury listed';
   document.querySelector('#profile-bio').textContent = bio ?? 'Bio coming later.';
+  document.querySelector('#profile-similar-player').textContent = similarPlayer ?? '';
+  document.querySelector('#profile-comparison').hidden = !similarPlayer;
 
   const note = document.querySelector('#profile-attendance');
   note.hidden = unknown === 0;

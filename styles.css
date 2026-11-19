@@ -271,7 +271,8 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 #editor-form p, #editor-form label, #delete-dialog p { margin-top: .75rem; line-height: 1.45; }
 #editor-form a { color: var(--violet); font-weight: 700; }
 .profile-heading { display: flex; gap: .75rem; align-items: center; }
-.profile-heading h2 { flex: 1; }
+.profile-name { flex: 1; }
+#profile-shirt-number { color: var(--muted); font-size: .875rem; margin-top: .25rem; }
 .profile-portrait { width: 4rem; aspect-ratio: 1; flex: none; }
 .profile-portrait img, .profile-portrait span { width: 100%; height: 100%; }
 .profile-portrait img { display: block; object-fit: cover; }
@@ -286,6 +287,9 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 .profile-bio { border-top: 1px solid var(--line); margin-top: .9rem; padding-top: .8rem; }
 .profile-bio h3 { color: var(--violet); }
 .profile-bio p { margin-top: .25rem; line-height: 1.45; }
+#profile-comparison { margin-top: .65rem; }
+#profile-comparison dt { color: var(--muted); font-size: .875rem; }
+#profile-comparison dd { margin-top: .15rem; font-weight: 700; }
 
 @media (max-width: 52rem) {
   #log-panel { grid-template-columns: 1fr; }

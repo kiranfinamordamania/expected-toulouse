@@ -13,6 +13,7 @@ const playerProfiles = {
   },
   Boyce: {
     number: 22,
+    position: 'Defender',
     photo: './photos/boyce.webp',
     photoCrop: [49.26, 44.5, 270],
     injury: { outUntil: 'mid-February 2027', month: '2027-02' },
@@ -21,6 +22,7 @@ const playerProfiles = {
   },
   Kiran: {
     number: 6,
+    position: 'Midfielder',
     photo: './photos/kiran.webp',
     photoCrop: [64.8, 30.83, 262.14],
     bio: 'Good on the ball, often shoots wide, can find a pass.',
@@ -28,12 +30,14 @@ const playerProfiles = {
   },
   'Ben 2': {
     number: 8,
+    position: 'Midfielder',
     bio: 'Classy footballer. Cool, calm and collected.',
     similarPlayer: 'Michael Carrick'
   },
-  Billy: { number: 2, photo: './photos/billy.webp', photoCrop: [48.89, 40.37, 207.69], bio: 'Classic squad player', similarPlayer: 'Phil Neville' },
+  Billy: { number: 2, position: 'Defender', photo: './photos/billy.webp', photoCrop: [48.89, 40.37, 207.69], bio: 'Classic squad player', similarPlayer: 'Phil Neville' },
   Potter: {
     number: 20,
+    position: 'Midfielder',
     photo: './photos/potter.webp',
     photoCrop: [47.59, 39.3, 154.29],
     bio: 'Solid player, low energy at points, decent on the ball.',
@@ -41,20 +45,22 @@ const playerProfiles = {
   },
   Will: {
     number: 67,
+    position: 'Forward',
     photo: './photos/will.webp',
     photoCrop: [53.98, 21.64, 222.12],
     bio: 'Hunger, desire and high energy. Questionable on the ball',
     similarPlayer: 'Joe Allen'
   },
-  James: { number: 53, photo: './photos/james.webp', photoCrop: [50.19, 32.1, 284.21], bio: 'Lack of commitment, always partying.', similarPlayer: 'Joey Barton' },
+  James: { number: 53, position: 'Forward', photo: './photos/james.webp', photoCrop: [50.19, 32.1, 284.21], bio: 'Lack of commitment, always partying.', similarPlayer: 'Joey Barton' },
   Luca: {
     number: 7,
+    position: 'Midfielder',
     photo: './photos/luca.webp',
     photoCrop: [49.81, 34.97, 257.14],
     bio: 'Best signing in the clubs history, foot blessed by God.',
     similarPlayer: 'Rayan Cherki'
   },
-  Matty: { number: 3, photo: './photos/matty.webp', photoCrop: [46.14, 23.27, 176], bio: 'Hunk, ultra slow defender', similarPlayer: 'Per Mertesacker' }
+  Matty: { number: 3, position: 'Defender', photo: './photos/matty.webp', photoCrop: [46.14, 23.27, 176], bio: 'Hunk, ultra slow defender', similarPlayer: 'Per Mertesacker' }
 };
 const previousMatchPrefix = 'expected-toulouse:matches:v1:';
 const editorTokenKey = 'expected-toulouse:editor-token:v1';

@@ -1,6 +1,42 @@
 {
   "matches": [
     {
+      "week": 3,
+      "team": 7,
+      "opponent": 2,
+      "opponentName": "Backstreet Moyes",
+      "goals": [
+        {
+          "scorer": "James",
+          "assist": ""
+        },
+        {
+          "scorer": "Boyce",
+          "assist": ""
+        },
+        {
+          "scorer": "Boyce",
+          "assist": ""
+        },
+        {
+          "scorer": "Will",
+          "assist": ""
+        },
+        {
+          "scorer": "Luca",
+          "assist": ""
+        },
+        {
+          "scorer": "Luca",
+          "assist": ""
+        },
+        {
+          "scorer": "uncredited",
+          "assist": ""
+        }
+      ]
+    },
+    {
       "week": 2,
       "team": 4,
       "opponent": 6,

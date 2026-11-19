@@ -2,7 +2,8 @@
 
 const players = ['Zach', 'Boyce', 'Kiran', 'Ben 2', 'Billy', 'Potter', 'Will', 'James', 'Luca', 'Matty'];
 const previousMatchPrefix = 'expected-toulouse:matches:v1:';
-const resultsEndpoint = 'https://api.github.com/repos/kiranfinamordamania/expected-toulouse/contents/matches.json';
+const repositoryName = location.pathname.split('/')[1] === 'expectedtoulouse' ? 'expectedtoulouse' : 'expected-toulouse';
+const resultsEndpoint = `https://api.github.com/repos/kiranfinamordamania/${repositoryName}/contents/matches.json`;
 const resultsBranch = 'match-data';
 const uncredited = 'uncredited';
 const scoreForm = document.querySelector('#score-form');
@@ -388,7 +389,7 @@ async function updateSharedHistory(week, baseline, replacement, report) {
       report('This gameweek changed. Refresh results and check the latest score before trying again.');
     } else if ([401, 403, 404].includes(error.status)) {
       editorToken = '';
-      report(`GitHub did not allow this ${action === 'save' ? 'save' : 'deletion'}. Check that your token has Contents: Read and write for expected-toulouse, then try again.`);
+      report(`GitHub did not allow this ${action === 'save' ? 'save' : 'deletion'}. Check that your token has Contents: Read and write for ${repositoryName}, then try again.`);
     } else {
       report(`Could not ${action} the match on GitHub. Try again.`);
     }
@@ -416,6 +417,7 @@ function withEditorAccess(action, request) {
   }
   editorAction = request;
   document.querySelector('#editor-title').textContent = `Connect GitHub to ${action}`;
+  document.querySelector('#editor-repository').textContent = `only the ${repositoryName} repository`;
   document.querySelector('#connect-editor').textContent = `Connect and ${action} match`;
   editorDialog.showModal();
 }

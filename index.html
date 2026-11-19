@@ -8,8 +8,8 @@
   <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
   <title>Expected Toulouse · Match Stats</title>
   <link rel="icon" href="./expected-toulouse-crest.png" type="image/png">
-  <link rel="stylesheet" href="./styles.css?v=profiles-2">
-  <script src="./stats.js?v=profiles-2" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=seasons-1">
+  <script src="./stats.js?v=seasons-1" defer></script>
 </head>
 <body>
   <header class="masthead">
@@ -24,6 +24,7 @@
 
   <main class="wrap">
     <section class="season-overview" aria-label="Team totals and leaders">
+      <div class="season-filter"><label for="season-filter">Season</label><select id="season-filter"><option value="2026">2026/27</option></select></div>
       <dl class="stats-strip">
         <div class="stat"><dt>Team goals</dt><dd id="team-goals">0</dd></div>
         <div class="stat"><dt>Clean sheets</dt><dd id="team-clean-sheets">0</dd></div>
@@ -44,32 +45,41 @@
 
       <section id="log-panel" role="tabpanel" aria-labelledby="log-tab">
         <div class="match-entry">
-          <form id="score-form">
-            <h2 id="score-heading" tabindex="-1">Record a match</h2>
-            <div class="score-fields">
-              <label>Gameweek<input id="gameweek" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" required></label>
-              <label>Opponent name<input id="opponent-name" type="text" maxlength="100" placeholder="e.g. Riverside FC" required></label>
-              <label>Expected Toulouse goals<input id="team-score" type="number" min="0" max="99" step="1" inputmode="numeric" required></label>
-              <label>Opponent goals<input id="opponent-score" type="number" min="0" max="99" step="1" inputmode="numeric" required></label>
-            </div>
-            <button class="primary" type="submit">Continue</button>
-          </form>
+          <div id="entry-gate">
+            <h2>Record a match</h2>
+            <p class="empty-log">Enter your GitHub access token to unlock match entry.</p>
+            <button class="primary" id="unlock-entry" type="button">Enter access token</button>
+          </div>
+          <div id="entry-forms" hidden>
+            <form id="score-form">
+              <h2 id="score-heading" tabindex="-1">Record a match</h2>
+              <div class="score-fields">
+                <label>Season start year<input id="match-season" type="number" min="1900" max="9998" step="1" inputmode="numeric" aria-describedby="season-preview" required><span id="season-preview" class="field-help" aria-hidden="true"></span></label>
+                <label>Competition<select id="match-competition"><option value="league">League</option><option value="cup">Cup</option></select></label>
+                <label><span id="gameweek-label">Gameweek</span><input id="gameweek" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" required></label>
+                <label>Opponent name<input id="opponent-name" type="text" maxlength="100" placeholder="e.g. Riverside FC" required></label>
+                <label>Expected Toulouse goals<input id="team-score" type="number" min="0" max="99" step="1" inputmode="numeric" required></label>
+                <label>Opponent goals<input id="opponent-score" type="number" min="0" max="99" step="1" inputmode="numeric" required></label>
+              </div>
+              <button class="primary" type="submit">Continue</button>
+            </form>
 
-          <form id="goals-form" hidden>
-            <h2 id="details-heading" tabindex="-1">Assign goals</h2>
-            <p id="match-score" class="match-score"></p>
-            <p id="no-goals" hidden>No Expected Toulouse goals to assign.</p>
-            <div id="goal-fields" class="goal-fields"></div>
-            <fieldset id="match-lineup" class="match-lineup" aria-describedby="lineup-help">
-              <legend>Players who played</legend>
-              <p id="lineup-help">Select everyone who took part. Leave blank if the lineup is unknown. Scorers and assisters count automatically.</p>
-              <div id="lineup-options" class="lineup-options"></div>
-            </fieldset>
-            <div class="form-actions">
-              <button class="primary" id="save-match" type="submit">Save match</button>
-              <button class="secondary" id="change-score" type="button">Change score</button>
-            </div>
-          </form>
+            <form id="goals-form" hidden>
+              <h2 id="details-heading" tabindex="-1">Assign goals</h2>
+              <p id="match-score" class="match-score"></p>
+              <p id="no-goals" hidden>No Expected Toulouse goals to assign.</p>
+              <div id="goal-fields" class="goal-fields"></div>
+              <fieldset id="match-lineup" class="match-lineup" aria-describedby="lineup-help">
+                <legend>Players who played</legend>
+                <p id="lineup-help">Select everyone who took part. Leave blank if the lineup is unknown. Scorers and assisters count automatically.</p>
+                <div id="lineup-options" class="lineup-options"></div>
+              </fieldset>
+              <div class="form-actions">
+                <button class="primary" id="save-match" type="submit">Save match</button>
+                <button class="secondary" id="change-score" type="button">Change score</button>
+              </div>
+            </form>
+          </div>
           <p id="match-feedback" class="match-feedback" role="status" hidden></p>
         </div>
 
@@ -160,13 +170,14 @@
 
   <dialog id="editor-dialog" aria-labelledby="editor-title">
     <form id="editor-form">
-      <h2 id="editor-title">Connect GitHub to save</h2>
+      <h2 id="editor-title">Connect GitHub to edit</h2>
       <p>Create a fine-grained token on GitHub with access to <strong>only the expected-toulouse repository</strong> and <strong>Contents: Read and write</strong>.</p>
       <p><a href="https://github.com/settings/personal-access-tokens/new?name=Expected+Toulouse+match+editor&amp;target_name=kiranfinamordamania&amp;expires_in=30&amp;contents=write" target="_blank" rel="noopener noreferrer">Create a GitHub editing token</a></p>
       <label>GitHub editing token<input id="editor-token" type="password" pattern="github_pat_[A-Za-z0-9_]+" autocomplete="off" spellcheck="false" required></label>
       <p>The token is held in this tab until you reload or close it.</p>
+      <p id="editor-feedback" role="status" hidden></p>
       <div class="form-actions">
-        <button class="primary" id="connect-editor" type="submit">Connect and save match</button>
+        <button class="primary" id="connect-editor" type="submit">Unlock editing</button>
         <button class="secondary" id="cancel-editor" type="button">Cancel</button>
       </div>
     </form>

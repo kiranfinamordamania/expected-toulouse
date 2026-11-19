@@ -73,6 +73,8 @@ button:disabled { opacity: .65; cursor: wait; }
 .masthead-subtitle { margin-top: .55rem; font-size: .95rem; color: #f1e8fa; }
 
 .season-overview { border-bottom: 1px solid var(--line); }
+.season-filter { display: flex; align-items: center; gap: .75rem; padding-top: .85rem; color: var(--violet); font-weight: 700; }
+.season-filter select { width: auto; min-width: 7rem; }
 .stats-strip {
   display: grid;
   grid-template-columns: .75fr .9fr 1.35fr 1.35fr;
@@ -155,6 +157,9 @@ h2 { font: 700 2rem/1 var(--display); color: var(--dark-violet); }
   font-size: .875rem;
   font-weight: 700;
 }
+.field-help { color: var(--muted); font-size: .8rem; font-weight: 400; }
+#entry-gate button { margin-top: .85rem; }
+#editor-feedback { color: var(--danger); }
 input, select {
   width: 100%;
   min-height: 2.75rem;

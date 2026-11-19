@@ -47,6 +47,12 @@ const previousMatchPrefix = 'expected-toulouse:matches:v1:';
 const resultsEndpoint = 'https://api.github.com/repos/kiranfinamordamania/expected-toulouse/contents/matches.json';
 const resultsBranch = 'match-data';
 const uncredited = 'uncredited';
+const legacySeason = 2026;
+const seasonFilter = document.querySelector('#season-filter');
+const matchSeasonInput = document.querySelector('#match-season');
+const competitionInput = document.querySelector('#match-competition');
+const entryGate = document.querySelector('#entry-gate');
+const entryForms = document.querySelector('#entry-forms');
 const scoreForm = document.querySelector('#score-form');
 const goalsForm = document.querySelector('#goals-form');
 const scoreHeading = document.querySelector('#score-heading');
@@ -67,14 +73,17 @@ const refreshButton = document.querySelector('#refresh-results');
 const saveButton = document.querySelector('#save-match');
 const editorDialog = document.querySelector('#editor-dialog');
 const editorTokenInput = document.querySelector('#editor-token');
+const editorFeedback = document.querySelector('#editor-feedback');
+const connectEditor = document.querySelector('#connect-editor');
 const deleteDialog = document.querySelector('#delete-dialog');
 let matches = [];
 let squadStats = emptySquadStats();
 let openProfile;
 let draft;
-let loadedWeek;
+let activeSeason;
 let editorToken = '';
 let editorAction;
+let connecting = false;
 let deleteTarget;
 let saving = false;
 let resultsVersion = 0;
@@ -92,6 +101,20 @@ function inRange(number, min, max) {
   return Number.isInteger(number) && number >= min && number <= max;
 }
 
+function seasonLabel(year) {
+  return `${year}/${String(year + 1).slice(-2)}`;
+}
+
+function matchSeason(match) { return match.season ?? legacySeason; }
+function matchCompetition(match) { return match.competition ?? 'league'; }
+function matchKey(match) { return `${matchSeason(match)}:${matchCompetition(match)}:${match.week}`; }
+function matchLabel(match) { return `${matchCompetition(match) === 'cup' ? 'Cup game' : 'Gameweek'} ${match.week}`; }
+
+function sortMatches(records) {
+  return records.sort((first, second) => matchSeason(second) - matchSeason(first)
+    || second.week - first.week || matchCompetition(second).localeCompare(matchCompetition(first)));
+}
+
 function validGoal(goal) {
   if (!goal) return false;
   if (goal.scorer === uncredited) return goal.assist === '';
@@ -101,6 +124,8 @@ function validGoal(goal) {
 
 function validMatch(match) {
   return match && inRange(match.week, 1, 999)
+    && (match.season === undefined || inRange(match.season, 1900, 9998))
+    && (match.competition === undefined || ['league', 'cup'].includes(match.competition))
     && inRange(match.team, 0, 99) && inRange(match.opponent, 0, 99)
     && typeof match.opponentName === 'string' && match.opponentName.trim().length > 0 && match.opponentName.length <= 100
     && Array.isArray(match.goals) && match.goals.length === match.team && match.goals.every(validGoal)
@@ -147,10 +172,10 @@ async function readSharedResults(token = '') {
   const bytes = Uint8Array.from(atob(file.content), char => char.charCodeAt(0));
   const data = JSON.parse(new TextDecoder().decode(bytes));
   if (file.encoding !== 'base64' || typeof file.sha !== 'string' || !Array.isArray(data.matches)
-    || !data.matches.every(validMatch) || new Set(data.matches.map(match => match.week)).size !== data.matches.length) {
+    || !data.matches.every(validMatch) || new Set(data.matches.map(matchKey)).size !== data.matches.length) {
     throw new Error('Shared match history is invalid');
   }
-  return { sha: file.sha, records: data.matches.sort((first, second) => second.week - first.week) };
+  return { sha: file.sha, records: sortMatches(data.matches) };
 }
 
 function encodeResults(records) {
@@ -160,17 +185,18 @@ function encodeResults(records) {
   return btoa(binary);
 }
 
-async function writeSharedMatch(week, baseline, replacement) {
+async function writeSharedMatch(match, baseline, replacement) {
+  const key = matchKey(match);
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const { sha, records } = await readSharedResults(editorToken);
-    const current = records.find(record => record.week === week);
+    const current = records.find(record => matchKey(record) === key);
     if (JSON.stringify(current) === JSON.stringify(replacement)) return records;
     if (JSON.stringify(current) !== JSON.stringify(baseline)) {
-      throw Object.assign(new Error('Gameweek has changed'), { changed: true });
+      throw Object.assign(new Error('Match has changed'), { changed: true });
     }
-    const updated = records.filter(record => record.week !== week);
+    const updated = records.filter(record => matchKey(record) !== key);
     if (replacement) updated.push(replacement);
-    updated.sort((first, second) => second.week - first.week);
+    sortMatches(updated);
     try {
       await githubRequest(resultsEndpoint, {
         method: 'PUT',
@@ -178,7 +204,7 @@ async function writeSharedMatch(week, baseline, replacement) {
         body: JSON.stringify({
           branch: resultsBranch,
           sha,
-          message: `${replacement ? 'Save' : 'Delete'} Expected Toulouse gameweek ${week}`,
+          message: `${replacement ? 'Save' : 'Delete'} ${matchLabel(match).toLowerCase()} · ${seasonLabel(matchSeason(match))}`,
           content: encodeResults(updated)
         })
       });
@@ -290,18 +316,18 @@ function renderHistory(container, records, editable = false) {
     const actions = element('div', undefined, 'match-card-actions');
     const score = element('p', undefined, 'match-score');
     score.append('Expected Toulouse ', element('strong', `${match.team}–${match.opponent}`), ` ${match.opponentName}`);
-    title.append(element('h3', `Gameweek ${match.week}`), score);
+    title.append(element('h3', matchLabel(match)), score);
     top.append(title);
     if (editable) {
       const edit = element('button', 'Edit', 'secondary');
       edit.type = 'button';
-      edit.setAttribute('aria-label', `Edit gameweek ${match.week}`);
-      edit.dataset.week = match.week;
+      edit.setAttribute('aria-label', `Edit ${matchLabel(match).toLowerCase()}`);
+      edit.dataset.match = matchKey(match);
       actions.append(edit);
     }
     const remove = element('button', 'Delete', 'secondary remove-match');
     remove.type = 'button';
-    remove.setAttribute('aria-label', `Delete gameweek ${match.week}${editable ? '' : ' from this browser'}`);
+    remove.setAttribute('aria-label', `Delete ${matchLabel(match).toLowerCase()}${editable ? '' : ' from this browser'}`);
     remove.addEventListener('click', () => confirmDelete(match, !editable));
     actions.append(remove);
     top.append(actions);
@@ -335,10 +361,16 @@ function renderLeader(stats, metric, id, unit) {
 }
 
 function render() {
+  const seasons = [...new Set([legacySeason, ...matches.map(matchSeason)])].sort((first, second) => second - first);
+  activeSeason ??= seasons[0];
+  if (!seasons.includes(activeSeason)) seasons.unshift(activeSeason);
+  seasonFilter.replaceChildren(...seasons.map(year => makeOption(seasonLabel(year), year)));
+  seasonFilter.value = activeSeason;
+  const seasonMatches = matches.filter(match => matchSeason(match) === activeSeason);
   const stats = emptySquadStats();
   const keeperMatches = [];
   let goals = 0;
-  for (const match of matches) {
+  for (const match of seasonMatches) {
     const participants = new Set(match.lineup);
     goals += match.team;
     if (match.team > 0 && match.opponent === 0) keeperMatches.push(match);
@@ -364,13 +396,13 @@ function render() {
   renderLeader(stats, 'assists', 'top-assister', 'assist');
   document.querySelector('#keeper-counter').textContent = keeperMatches.length;
   const list = document.querySelector('#keeper-matches');
-  list.replaceChildren(...keeperMatches.map(match => element('li', `Gameweek ${match.week} · ${scoreLine(match)}`)));
+  list.replaceChildren(...keeperMatches.map(match => element('li', `${matchLabel(match)} · ${scoreLine(match)}`)));
   list.hidden = keeperMatches.length === 0;
   renderSquad(stats);
   if (profileDialog.open && openProfile) renderProfile(openProfile);
-  renderHistory(history, matches, true);
-  emptyLog.hidden = matches.length > 0 && !loadFailed;
-  emptyLog.textContent = loadFailed ? 'Could not load the latest shared results. Try Refresh results.' : 'No shared matches recorded yet.';
+  renderHistory(history, seasonMatches, true);
+  emptyLog.hidden = seasonMatches.length > 0 && !loadFailed;
+  emptyLog.textContent = loadFailed ? 'Could not load the latest shared results. Try Refresh results.' : 'No matches recorded for this season yet.';
 }
 
 function setFeedback(message) {
@@ -395,28 +427,34 @@ function showScoreForm(moveFocus = false) {
   if (moveFocus) scoreHeading.focus();
 }
 
-function loadWeek(week) {
-  const existing = matches.find(match => match.week === week);
-  loadedWeek = week;
+function loadMatch(identity) {
+  const season = matchSeason(identity);
+  const competition = matchCompetition(identity);
+  const { week } = identity;
+  const existing = matches.find(match => matchKey(match) === matchKey(identity));
+  matchSeasonInput.value = season;
+  document.querySelector('#season-preview').textContent = seasonLabel(season);
+  competitionInput.value = competition;
+  document.querySelector('#gameweek-label').textContent = competition === 'cup' ? 'Cup game number' : 'Gameweek';
   weekInput.value = week;
   teamInput.value = existing?.team ?? '';
   opponentInput.value = existing?.opponent ?? '';
   opponentNameInput.value = existing?.opponentName ?? '';
-  scoreHeading.textContent = existing ? `Edit gameweek ${week}` : 'Record a match';
-  draft = { week, baseline: existing, goals: existing?.goals ?? [], lineup: existing?.lineup ?? [] };
+  scoreHeading.textContent = existing ? `Edit ${matchLabel(existing).toLowerCase()}` : 'Record a match';
+  draft = { season, competition, week, baseline: existing, goals: existing?.goals ?? [], lineup: existing?.lineup ?? [] };
   setFeedback('');
   showScoreForm();
 }
 
-function nextWeek() {
-  if (matches.length === 0) return 1;
-  const highest = matches[0].week;
-  if (highest < 999) return highest + 1;
-  const saved = new Set(matches.map(match => match.week));
-  for (let week = 1; week < 999; week += 1) {
-    if (!saved.has(week)) return week;
+function nextMatch(season = activeSeason ?? legacySeason, competition = 'league') {
+  const saved = new Set(matches.filter(match => matchSeason(match) === season && matchCompetition(match) === competition)
+    .map(match => match.week));
+  let week = Math.max(0, ...saved) + 1;
+  if (week > 999) {
+    week = 1;
+    while (week < 999 && saved.has(week)) week += 1;
   }
-  return highest;
+  return { season, competition, week };
 }
 
 function makeOption(label, value = label) {
@@ -478,30 +516,60 @@ function draftLineup() {
   return Array.from(lineupOptions.querySelectorAll('input:checked'), input => input.value);
 }
 
+function readMatchIdentity() {
+  return { season: matchSeasonInput.valueAsNumber, competition: competitionInput.value, week: weekInput.valueAsNumber };
+}
+
+function reloadEntryIdentity() {
+  const { season, competition } = readMatchIdentity();
+  if (inRange(season, 1900, 9998)) loadMatch(nextMatch(season, competition));
+}
+
+matchSeasonInput.addEventListener('input', () => {
+  const year = matchSeasonInput.valueAsNumber;
+  if (!inRange(year, 1900, 9998)) {
+    document.querySelector('#season-preview').textContent = '';
+  } else if (draft?.season !== year) {
+    reloadEntryIdentity();
+  }
+});
+competitionInput.addEventListener('change', reloadEntryIdentity);
 weekInput.addEventListener('input', () => {
-  const week = weekInput.valueAsNumber;
-  if (inRange(week, 1, 999) && week !== loadedWeek) loadWeek(week);
+  const identity = readMatchIdentity();
+  if (inRange(identity.season, 1900, 9998) && inRange(identity.week, 1, 999)
+    && (!draft || matchKey(identity) !== matchKey(draft))) loadMatch(identity);
+});
+
+seasonFilter.addEventListener('change', () => {
+  activeSeason = Number(seasonFilter.value);
+  render();
+  if (editorToken && !scoreForm.hidden && !draft?.baseline && !opponentNameInput.value && teamInput.value === '' && opponentInput.value === '') {
+    loadMatch(nextMatch());
+  }
 });
 
 scoreForm.addEventListener('submit', event => {
   event.preventDefault();
-  const week = weekInput.valueAsNumber;
+  if (!editorToken || saving) return;
+  const identity = readMatchIdentity();
   const team = teamInput.valueAsNumber;
   const opponent = opponentInput.valueAsNumber;
   const opponentName = opponentNameInput.value.trim();
-  if (!inRange(week, 1, 999) || !inRange(team, 0, 99) || !inRange(opponent, 0, 99)) return;
+  if (!inRange(identity.season, 1900, 9998) || !inRange(identity.week, 1, 999)
+    || !inRange(team, 0, 99) || !inRange(opponent, 0, 99)) return;
   if (!opponentName) {
     setFeedback('Enter the opponent’s name.');
     opponentNameInput.focus();
     return;
   }
-  const existing = matches.find(match => match.week === week);
-  const goals = draft?.week === week ? draft.goals : existing?.goals ?? [];
-  const lineup = draft?.week === week ? draft.lineup : existing?.lineup ?? [];
-  draft = { week, team, opponent, opponentName, goals, lineup, baseline: draft?.week === week ? draft.baseline : existing };
+  const existing = matches.find(match => matchKey(match) === matchKey(identity));
+  const sameMatch = draft && matchKey(draft) === matchKey(identity);
+  const goals = sameMatch ? draft.goals : existing?.goals ?? [];
+  const lineup = sameMatch ? draft.lineup : existing?.lineup ?? [];
+  draft = { ...identity, team, opponent, opponentName, goals, lineup, baseline: sameMatch ? draft.baseline : existing };
   goalFields.replaceChildren(...Array.from({ length: team }, (_, index) => makeGoalFields(index, goals[index])));
   renderLineup(lineup);
-  document.querySelector('#match-score').textContent = `Gameweek ${week} · ${scoreLine(draft)}`;
+  document.querySelector('#match-score').textContent = `${seasonLabel(draft.season)} · ${matchLabel(draft)} · ${scoreLine(draft)}`;
   document.querySelector('#no-goals').hidden = team > 0;
   detailsHeading.textContent = team > 0 ? 'Assign goals' : 'Confirm match';
   setFeedback('');
@@ -518,23 +586,23 @@ document.querySelector('#change-score').addEventListener('click', () => {
   showScoreForm(true);
 });
 
-async function updateSharedHistory(week, baseline, replacement, report) {
-  if (saving) return false;
+async function updateSharedHistory(match, baseline, replacement, report) {
+  if (saving || !editorToken) return false;
   const action = replacement ? 'save' : 'delete';
   saving = true;
   resultsVersion += 1;
   saveButton.disabled = true;
   report(replacement ? 'Saving to GitHub…' : 'Deleting from shared history…');
   try {
-    matches = await writeSharedMatch(week, baseline, replacement);
+    matches = await writeSharedMatch(match, baseline, replacement);
     loadFailed = false;
-    render();
     return true;
   } catch (error) {
     if (error.changed) {
-      report('This gameweek changed. Refresh results and check the latest score before trying again.');
+      report('This match changed. Refresh results and check the latest score before trying again.');
     } else if ([401, 403, 404].includes(error.status)) {
       editorToken = '';
+      syncEntryAccess();
       report(`GitHub did not allow this ${action === 'save' ? 'save' : 'deletion'}. Check that your token has Contents: Read and write for expected-toulouse, then try again.`);
     } else {
       report(`Could not ${action} the match on GitHub. Try again.`);
@@ -547,39 +615,69 @@ async function updateSharedHistory(week, baseline, replacement, report) {
 }
 
 async function publishMatch() {
-  const { week, team, opponent, opponentName, baseline } = draft;
-  const match = { week, team, opponent, opponentName, goals: draftGoals() };
+  const { season, competition, week, team, opponent, opponentName, baseline } = draft;
+  const match = { season, competition, week, team, opponent, opponentName, goals: draftGoals() };
   const lineup = draftLineup();
   if (lineup.length) match.lineup = lineup;
-  if (!validMatch(match) || !await updateSharedHistory(week, baseline, match, setFeedback)) return;
-  loadWeek(nextWeek());
-  setFeedback(`Gameweek ${week} saved to the shared history.`);
+  if (!validMatch(match) || !await updateSharedHistory(match, baseline, match, setFeedback)) return;
+  activeSeason = season;
+  render();
+  loadMatch(nextMatch(season, competition));
+  setFeedback(`${matchLabel(match)} saved to the shared history.`);
   scoreHeading.focus();
 }
 
-function withEditorAccess(action, request) {
-  if (saving) return;
+function syncEntryAccess() {
+  entryGate.hidden = Boolean(editorToken);
+  entryForms.hidden = !editorToken;
+}
+
+function withEditorAccess(request) {
+  if (saving || connecting) return;
   if (editorToken) {
     void request();
     return;
   }
   editorAction = request;
-  document.querySelector('#editor-title').textContent = `Connect GitHub to ${action}`;
-  document.querySelector('#connect-editor').textContent = `Connect and ${action} match`;
+  editorFeedback.hidden = true;
   editorDialog.showModal();
 }
 
+document.querySelector('#unlock-entry').addEventListener('click', () => withEditorAccess(() => scoreHeading.focus()));
 goalsForm.addEventListener('submit', event => {
   event.preventDefault();
-  withEditorAccess('save', publishMatch);
+  if (editorToken && !saving) void publishMatch();
 });
 
-document.querySelector('#editor-form').addEventListener('submit', event => {
+document.querySelector('#editor-form').addEventListener('submit', async event => {
   event.preventDefault();
-  editorToken = editorTokenInput.value.trim();
+  if (connecting) return;
+  const token = editorTokenInput.value.trim();
   const request = editorAction;
-  editorDialog.close();
-  if (request) void request();
+  connecting = true;
+  connectEditor.disabled = true;
+  editorFeedback.hidden = true;
+  try {
+    const { records } = await readSharedResults(token);
+    if (!editorDialog.open) return;
+    resultsVersion += 1;
+    editorToken = token;
+    matches = records;
+    loadFailed = false;
+    render();
+    if (!draft) loadMatch(nextMatch());
+    syncEntryAccess();
+    editorDialog.close();
+    if (request) void request();
+  } catch (error) {
+    editorFeedback.textContent = [401, 403, 404].includes(error.status)
+      ? 'GitHub rejected this token. Check its expiry and repository permissions.'
+      : 'Could not verify the token with GitHub. Try again.';
+    editorFeedback.hidden = false;
+  } finally {
+    connecting = false;
+    connectEditor.disabled = false;
+  }
 });
 editorDialog.addEventListener('close', () => {
   editorTokenInput.value = '';
@@ -591,7 +689,7 @@ function confirmDelete(match, local) {
   if (saving) return;
   setHistoryFeedback('');
   deleteTarget = { match, local };
-  document.querySelector('#delete-score').textContent = `Gameweek ${match.week} · ${scoreLine(match)}`;
+  document.querySelector('#delete-score').textContent = `${seasonLabel(matchSeason(match))} · ${matchLabel(match)} · ${scoreLine(match)}`;
   document.querySelector('#delete-scope').textContent = local
     ? 'This removes the result from this browser.'
     : 'This removes the result from the shared history and recalculates the stats.';
@@ -599,9 +697,10 @@ function confirmDelete(match, local) {
 }
 
 async function deleteSharedMatch(match) {
-  if (!await updateSharedHistory(match.week, match, undefined, setHistoryFeedback)) return;
-  if (draft?.week === match.week) loadWeek(nextWeek());
-  setHistoryFeedback(`Gameweek ${match.week} removed from the shared history.`);
+  if (!await updateSharedHistory(match, match, undefined, setHistoryFeedback)) return;
+  if (draft && matchKey(draft) === matchKey(match)) loadMatch(nextMatch(matchSeason(match), matchCompetition(match)));
+  render();
+  setHistoryFeedback(`${matchLabel(match)} removed from the shared history.`);
   historyHeading.focus();
 }
 
@@ -621,7 +720,7 @@ document.querySelector('#confirm-delete').addEventListener('click', () => {
   const { match, local } = deleteTarget;
   deleteDialog.close();
   if (local) deleteLocalMatch(match);
-  else withEditorAccess('delete', () => deleteSharedMatch(match));
+  else withEditorAccess(() => deleteSharedMatch(match));
 });
 deleteDialog.addEventListener('close', () => { deleteTarget = undefined; });
 
@@ -656,10 +755,18 @@ for (const [index, tab] of tabs.entries()) {
 }
 
 history.addEventListener('click', event => {
-  const edit = event.target.closest('button[data-week]');
+  const edit = event.target.closest('button[data-match]');
   if (!edit || saving) return;
-  loadWeek(Number(edit.dataset.week));
-  scoreHeading.focus();
+  const key = edit.dataset.match;
+  withEditorAccess(() => {
+    const match = matches.find(record => matchKey(record) === key);
+    if (!match) {
+      setHistoryFeedback('This match is no longer in the shared history.');
+      return;
+    }
+    loadMatch(match);
+    scoreHeading.focus();
+  });
 });
 
 async function refreshResults() {
@@ -672,7 +779,6 @@ async function refreshResults() {
     if (version !== resultsVersion) return;
     matches = records;
     loadFailed = false;
-    if (!draft) loadWeek(nextWeek());
   } catch {
     if (version !== resultsVersion) return;
     loadFailed = true;

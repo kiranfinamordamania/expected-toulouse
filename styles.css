@@ -160,7 +160,7 @@ h2 { font: 700 2rem/1 var(--display); color: var(--dark-violet); }
 .field-help { color: var(--muted); font-size: .8rem; font-weight: 400; }
 #entry-gate button, #forget-token { margin-top: .85rem; }
 #editor-feedback { color: var(--danger); }
-input, select {
+input, select, textarea {
   width: 100%;
   min-height: 2.75rem;
   padding: .46rem .65rem;
@@ -189,6 +189,12 @@ select:disabled { color: var(--muted); background: var(--wash); }
 .danger { color: #fff; background: var(--danger); border-color: var(--danger); }
 .danger:hover { background: #691a37; }
 .form-actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .9rem; }
+.match-comments { margin-top: .85rem; padding: .7rem; border: 1px solid var(--line); }
+.match-comments summary { color: var(--violet); font-weight: 700; cursor: pointer; }
+.match-comments p { margin-top: .45rem; color: var(--muted); font-size: .875rem; }
+.comment-fields { display: grid; gap: .65rem; margin-top: .65rem; }
+.comment-fields label { display: grid; gap: .25rem; font-size: .875rem; font-weight: 700; }
+.comment-fields textarea { font: inherit; font-weight: 400; resize: vertical; }
 .goal-fields { display: grid; gap: .65rem; margin-top: .75rem; }
 .goal-fields:empty { display: none; }
 .goal-row {
@@ -312,6 +318,13 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 .profile-bio { border-top: 1px solid var(--line); margin-top: .9rem; padding-top: .8rem; }
 .profile-bio h3 { color: var(--violet); }
 .profile-bio p { margin-top: .25rem; line-height: 1.45; }
+.profile-comments-link { margin-top: .85rem; }
+.profile-comments-link a, #player-comments a { color: var(--violet); font-weight: 700; }
+#player-comment-history h3 { margin-top: .65rem; color: var(--dark-violet); }
+.manager-comment { padding: .7rem 0; border-bottom: 1px solid var(--line); }
+.manager-comment:last-child { border-bottom: 0; }
+.manager-comment h4 { color: var(--violet); font-size: .95rem; }
+.manager-comment p { margin-top: .3rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 #profile-comparison { margin-top: .65rem; }
 #profile-comparison dt { color: var(--muted); font-size: .875rem; }
 #profile-comparison dd { margin-top: .15rem; font-weight: 700; }

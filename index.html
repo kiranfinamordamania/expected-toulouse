@@ -8,8 +8,8 @@
   <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
   <title>Expected Toulouse · Match Stats</title>
   <link rel="icon" href="./expected-toulouse-crest.png" type="image/png">
-  <link rel="stylesheet" href="./styles.css?v=squad-columns-1">
-  <script src="./stats.js?v=squad-order-1" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=manager-comments-1">
+  <script src="./stats.js?v=manager-comments-1" defer></script>
 </head>
 <body>
   <header class="masthead">
@@ -73,6 +73,11 @@
                 <p id="lineup-help">Select everyone who took part. Leave blank if the lineup is unknown. Scorers and assisters count automatically.</p>
                 <div id="lineup-options" class="lineup-options"></div>
               </fieldset>
+              <details id="match-comments" class="match-comments">
+                <summary>Manager’s comments</summary>
+                <p>Optional. Comments are public once the match is saved.</p>
+                <div id="comment-fields" class="comment-fields"></div>
+              </details>
               <div class="form-actions">
                 <button class="primary" id="save-match" type="submit">Save match</button>
                 <button class="secondary" id="change-score" type="button">Change score</button>
@@ -100,22 +105,32 @@
       </section>
 
       <section id="squad-panel" role="tabpanel" aria-labelledby="squad-tab" hidden>
-        <div class="board-heading">
-          <h2>Squad Stats</h2>
-          <p>10 players</p>
+        <div id="squad-overview">
+          <div class="board-heading">
+            <h2>Squad Stats</h2>
+            <p>10 players</p>
+          </div>
+          <table class="squad-table">
+            <thead>
+              <tr>
+                <th scope="col">Player</th>
+                <th scope="col">Position</th>
+                <th scope="col">Squad No.</th>
+                <th scope="col">Goals</th>
+                <th scope="col">Assists</th>
+              </tr>
+            </thead>
+            <tbody id="players"></tbody>
+          </table>
         </div>
-        <table class="squad-table">
-          <thead>
-            <tr>
-              <th scope="col">Player</th>
-              <th scope="col">Position</th>
-              <th scope="col">Squad No.</th>
-              <th scope="col">Goals</th>
-              <th scope="col">Assists</th>
-            </tr>
-          </thead>
-          <tbody id="players"></tbody>
-        </table>
+        <section id="player-comments" aria-labelledby="player-comments-heading" hidden>
+          <div class="board-heading">
+            <h2 id="player-comments-heading" tabindex="-1"></h2>
+            <a href="#squad">Back to Squad Stats</a>
+          </div>
+          <p id="player-comments-status" class="empty-log" role="status"></p>
+          <div id="player-comment-history"></div>
+        </section>
       </section>
 
       <section id="keeper-panel" role="tabpanel" aria-labelledby="keeper-tab" hidden>
@@ -172,6 +187,7 @@
         <div><dt>Similar player</dt><dd id="profile-similar-player"></dd></div>
       </dl>
     </section>
+    <p class="profile-comments-link"><a id="profile-comments" href="#squad">View manager’s comments</a></p>
   </dialog>
 
   <dialog id="editor-dialog" aria-labelledby="editor-title">

@@ -273,7 +273,6 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 .squad-forever { margin: 1.2rem 0; border: 1px solid var(--line); background: var(--wash); }
 .squad-forever h3 { padding: .55rem .85rem; border-bottom: 1px solid var(--line); color: var(--dark-violet); font: 700 1.35rem/1.2 var(--display); }
 .forever-player { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .75rem .85rem; }
-.forever-player strong { display: block; color: var(--violet); }
 .forever-player span { display: block; margin-top: .15rem; color: var(--muted); font-size: .875rem; }
 .forever-number { color: var(--violet); font-weight: 700; white-space: nowrap; }
 .injuries-table th, .injuries-table td { text-align: left; padding-inline: .75rem; }

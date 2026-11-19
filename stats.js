@@ -28,6 +28,12 @@ const playerProfiles = {
     bio: 'Good on the ball, often shoots wide, can find a pass.',
     similarPlayer: 'Jordan Henderson'
   },
+  'Ben 1': {
+    number: 9,
+    position: 'Forward',
+    bio: 'Giraffe on ice-skates',
+    similarPlayer: 'Ellis Simms'
+  },
   'Ben 2': {
     number: 8,
     position: 'Midfielder',
@@ -255,16 +261,18 @@ async function writeSharedMatch(match, baseline, replacement) {
   }
 }
 
+function showPlayerProfile(player) {
+  openProfile = player;
+  renderProfile(player);
+  profileDialog.showModal();
+}
+
 function playerLabel(player) {
   const identity = element('div', undefined, 'player');
   const profile = element('button', player, 'profile-link');
   profile.type = 'button';
   profile.setAttribute('aria-haspopup', 'dialog');
-  profile.addEventListener('click', () => {
-    openProfile = player;
-    renderProfile(player);
-    profileDialog.showModal();
-  });
+  profile.addEventListener('click', () => showPlayerProfile(player));
   identity.append(profile);
   return identity;
 }
@@ -275,7 +283,7 @@ function emptySquadStats() {
 
 function renderProfile(player) {
   const { number, position, injury, photo, photoCrop, bio, similarPlayer } = playerProfiles[player] ?? {};
-  const { played, goals, assists, unknown } = squadStats.get(player);
+  const stats = squadStats.get(player);
   const image = document.querySelector('#profile-photo');
   const initial = document.querySelector('#profile-initial');
   const [centerX, centerY, width] = photoCrop ?? [50, 50, 100];
@@ -291,27 +299,36 @@ function renderProfile(player) {
   }
   image.hidden = !photo;
   initial.hidden = Boolean(photo);
-  initial.textContent = player === 'Ben 2' ? 'B2' : player[0];
+  initial.textContent = player.startsWith('Ben ') ? `B${player.slice(4)}` : player[0];
 
   document.querySelector('#profile-title').textContent = player;
   const shirtNumber = document.querySelector('#profile-shirt-number');
   shirtNumber.textContent = number == null ? '' : `Shirt number ${number}`;
   shirtNumber.hidden = number == null;
-  document.querySelector('#profile-played').textContent = played;
-  document.querySelector('#profile-goals').textContent = goals;
-  document.querySelector('#profile-assists').textContent = assists;
+  document.querySelector('.profile-numbers').hidden = !stats;
+  if (stats) {
+    document.querySelector('#profile-played').textContent = stats.played;
+    document.querySelector('#profile-goals').textContent = stats.goals;
+    document.querySelector('#profile-assists').textContent = stats.assists;
+  }
   document.querySelector('#profile-position').textContent = position ?? 'Not set';
-  document.querySelector('#profile-injury').textContent = injury ? `Out until ${injury.outUntil}` : 'No injury listed';
+  const injuryStatus = document.querySelector('#profile-injury');
+  injuryStatus.parentElement.hidden = !stats;
+  injuryStatus.textContent = injury ? `Out until ${injury.outUntil}` : 'No injury listed';
   document.querySelector('#profile-bio').textContent = bio ?? 'Bio coming later.';
   document.querySelector('#profile-similar-player').textContent = similarPlayer ?? '';
   document.querySelector('#profile-comparison').hidden = !similarPlayer;
-  document.querySelector('#profile-comments').href = commentsHashPrefix + encodeURIComponent(player);
+  const comments = document.querySelector('#profile-comments');
+  comments.parentElement.hidden = !stats;
+  if (stats) comments.href = commentsHashPrefix + encodeURIComponent(player);
 
+  const unknown = stats?.unknown ?? 0;
   const note = document.querySelector('#profile-attendance');
   note.hidden = unknown === 0;
   note.textContent = unknown === 1 ? 'Attendance is unknown for 1 match.' : `Attendance is unknown for ${unknown} matches.`;
 }
 
+document.querySelector('#ben-forever-profile').addEventListener('click', () => showPlayerProfile('Ben 1'));
 document.querySelector('#close-profile').addEventListener('click', () => profileDialog.close());
 profileDialog.addEventListener('close', () => { openProfile = undefined; });
 

@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#281344">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
   <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
   <title>Expected Toulouse · Match Stats</title>
-  <link rel="stylesheet" href="./styles.css">
-  <script src="./stats.js" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=shared-1">
+  <script src="./stats.js?v=shared-1" defer></script>
 </head>
 <body>
   <header class="hero">
@@ -24,7 +25,6 @@
   <main class="wrap">
     <section class="totals" aria-label="Team totals">
       <div class="total-card"><p>Team goals</p><strong id="team-goals">0</strong></div>
-      <div class="total-card"><p>Team assists</p><strong id="team-assists">0</strong></div>
       <div class="total-card"><p>Clean sheets</p><strong id="team-clean-sheets">0</strong></div>
     </section>
 
@@ -41,6 +41,7 @@
             <h2 id="score-heading" tabindex="-1">Record a match</h2>
             <div class="score-fields">
               <label>Gameweek<input id="gameweek" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" required></label>
+              <label>Opponent name<input id="opponent-name" type="text" maxlength="100" placeholder="e.g. Riverside FC" required></label>
               <label>Expected Toulouse goals<input id="team-score" type="number" min="0" max="99" step="1" inputmode="numeric" required></label>
               <label>Opponent goals<input id="opponent-score" type="number" min="0" max="99" step="1" inputmode="numeric" required></label>
             </div>
@@ -53,7 +54,7 @@
             <p id="no-goals" hidden>No Expected Toulouse goals to assign.</p>
             <div id="goal-fields" class="goal-fields"></div>
             <div class="form-actions">
-              <button class="primary" type="submit">Save match</button>
+              <button class="primary" id="save-match" type="submit">Save match</button>
               <button class="secondary" id="change-score" type="button">Change score</button>
             </div>
           </form>
@@ -61,9 +62,17 @@
         </div>
 
         <div class="match-log">
-          <h2>Match history</h2>
-          <p class="empty-log" id="empty-log">No matches recorded yet.</p>
+          <div class="match-log-heading">
+            <h2>Match history</h2>
+            <button class="secondary" id="refresh-results" type="button">Refresh results</button>
+          </div>
+          <p class="empty-log" id="empty-log">Loading shared results…</p>
           <div id="week-log"></div>
+          <details id="local-history" hidden>
+            <summary>Previous results on this browser</summary>
+            <p class="empty-log">These matches are stored on this device.</p>
+            <div id="local-results"></div>
+          </details>
         </div>
       </section>
 
@@ -96,8 +105,22 @@
         <ul id="keeper-matches" class="keeper-matches" hidden></ul>
       </section>
 
-      <p class="save-note" id="save-note">Stats are saved in this browser.</p>
+      <p class="save-note">Saved matches are public and visible across browsers.</p>
     </section>
   </main>
+
+  <dialog id="editor-dialog" aria-labelledby="editor-title">
+    <form id="editor-form">
+      <h2 id="editor-title">Connect GitHub to save</h2>
+      <p>Create a fine-grained token on GitHub with access to <strong>only the expected-toulouse repository</strong> and <strong>Contents: Read and write</strong>.</p>
+      <p><a href="https://github.com/settings/personal-access-tokens/new?name=Expected+Toulouse+match+editor&amp;target_name=kiranfinamordamania&amp;expires_in=30&amp;contents=write" target="_blank" rel="noopener noreferrer">Create a GitHub editing token</a></p>
+      <label>GitHub editing token<input id="editor-token" type="password" pattern="github_pat_[A-Za-z0-9_]+" autocomplete="off" spellcheck="false" required></label>
+      <p>The token is held in this tab until you reload or close it.</p>
+      <div class="form-actions">
+        <button class="primary" type="submit">Connect and save match</button>
+        <button class="secondary" id="cancel-editor" type="button">Cancel</button>
+      </div>
+    </form>
+  </dialog>
 </body>
 </html>

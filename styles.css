@@ -111,7 +111,7 @@ h1 {
 }
 
 main.wrap { padding-block: 1.5rem 3rem; }
-.totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.totals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .total-card {
   display: flex;
   flex-direction: column;
@@ -193,8 +193,8 @@ td, #keeper-counter { font-weight: 750; font-variant-numeric: tabular-nums; }
 .match-entry { border-bottom: 1px solid var(--line); }
 .match-entry h2, .match-log h2 { font-size: 1.35rem; letter-spacing: -.025em; }
 .match-entry h2:focus, .match-log h2:focus { outline: none; }
-.score-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; margin-block: .85rem 1rem; }
-.score-fields label, .goal-row label { display: grid; align-content: end; gap: .35rem; font-size: .875rem; font-weight: 750; }
+.score-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin-block: .85rem 1rem; }
+.score-fields label, .goal-row label, #editor-form label { display: grid; align-content: end; gap: .35rem; font-size: .875rem; font-weight: 750; }
 input, select {
   width: 100%;
   min-height: 2.75rem;
@@ -212,21 +212,24 @@ select:disabled { color: var(--muted); background: #f4f0f8; }
 .primary:hover { background: #3a1e61; }
 .secondary { color: #542d86; background: #f7f1fb; border-color: #e3d6ed; }
 .secondary:hover { background: #eee1f8; }
+button:disabled { opacity: .65; cursor: wait; }
 .form-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .85rem; }
 .goal-fields { display: grid; gap: .7rem; margin-top: .65rem; }
 .goal-fields:empty { display: none; }
 .goal-row { min-width: 0; margin: 0; padding: .45rem .75rem .75rem; border: 1px solid var(--line); border-radius: .55rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
 .goal-row legend { padding-inline: .25rem; color: var(--violet); font-size: .875rem; font-weight: 750; }
 .match-entry .match-score { margin: .25rem 0 .5rem; }
-.match-score, .empty-log, .keeper-note, #no-goals { color: var(--muted); font-size: .95rem; }
+.match-score, .empty-log, .keeper-note, #no-goals { color: var(--muted); font-size: .95rem; overflow-wrap: anywhere; }
 .match-feedback { margin-top: .75rem; color: var(--violet); font-weight: 700; }
 .empty-log { margin-top: .4rem; }
+.match-log-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .65rem; }
 .match-card { padding: .75rem 0; border-bottom: 1px solid var(--line); }
 .match-card:last-child { border-bottom: 0; padding-bottom: 0; }
 .match-card-top { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
 .match-card h3 { margin: 0 0 .2rem; font-size: 1rem; }
 .match-card details { margin-top: .65rem; }
-.match-card summary { color: var(--violet); font-size: .9rem; font-weight: 700; cursor: pointer; }
+.match-card summary, #local-history > summary { color: var(--violet); font-size: .9rem; font-weight: 700; cursor: pointer; }
+#local-history { margin-top: 1rem; }
 .match-card ol { margin: .55rem 0 .25rem; padding-left: 1.5rem; }
 .match-card li + li { margin-top: .35rem; }
 .match-card li span { margin-left: .55rem; color: var(--muted); font-size: .875rem; }
@@ -236,6 +239,11 @@ select:disabled { color: var(--muted); background: #f4f0f8; }
 .keeper-matches { margin: 0; padding: 0 1.2rem .85rem 2.35rem; }
 .keeper-matches li + li { margin-top: .3rem; }
 .save-note { padding: .7rem 1.2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .875rem; }
+#editor-dialog { width: min(100% - 2rem, 29rem); padding: 1.2rem; border: 1px solid var(--line); border-radius: .9rem; color: inherit; }
+#editor-dialog::backdrop { background: #24133999; }
+#editor-form p, #editor-form label { margin-top: .75rem; }
+#editor-form p { line-height: 1.45; }
+#editor-form a { color: var(--violet); font-weight: 700; }
 
 @media (max-width: 39rem) {
   .wrap { width: calc(100% - 1.5rem); }
@@ -253,6 +261,5 @@ select:disabled { color: var(--muted); background: #f4f0f8; }
   .initials { display: none; }
   .keeper-row .initials { display: grid; }
   .keeper-tag { margin-left: .08rem; }
-  .score-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
-  .score-fields label:first-child { grid-column: 1 / -1; width: 7rem; }
+  .score-fields { gap: .6rem; }
 }

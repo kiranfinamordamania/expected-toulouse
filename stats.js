@@ -1,7 +1,9 @@
 'use strict';
 
 const players = ['Zach', 'Boyce', 'Kiran', 'Ben 2', 'Billy', 'Potter', 'Will', 'James', 'Luca', 'Matty'];
-const matchPrefix = 'expected-toulouse:matches:v1:';
+const previousMatchPrefix = 'expected-toulouse:matches:v1:';
+const resultsEndpoint = 'https://api.github.com/repos/kiranfinamordamania/expected-toulouse/contents/matches.json';
+const resultsBranch = 'match-data';
 const uncredited = 'uncredited';
 const scoreForm = document.querySelector('#score-form');
 const goalsForm = document.querySelector('#goals-form');
@@ -10,13 +12,23 @@ const detailsHeading = document.querySelector('#details-heading');
 const weekInput = document.querySelector('#gameweek');
 const teamInput = document.querySelector('#team-score');
 const opponentInput = document.querySelector('#opponent-score');
+const opponentNameInput = document.querySelector('#opponent-name');
 const feedback = document.querySelector('#match-feedback');
 const goalFields = document.querySelector('#goal-fields');
 const history = document.querySelector('#week-log');
+const emptyLog = document.querySelector('#empty-log');
+const refreshButton = document.querySelector('#refresh-results');
+const saveButton = document.querySelector('#save-match');
+const editorDialog = document.querySelector('#editor-dialog');
+const editorTokenInput = document.querySelector('#editor-token');
 let matches = [];
 let draft;
 let loadedWeek;
-let storageUnavailable = false;
+let editorToken = '';
+let saving = false;
+let resultsVersion = 0;
+let lastRefresh = 0;
+let loadFailed = false;
 
 function element(tag, text, className) {
   const node = document.createElement(tag);
@@ -36,31 +48,92 @@ function validGoal(goal) {
     && (goal.assist === '' || (players.includes(goal.assist) && goal.assist !== goal.scorer));
 }
 
-function validMatch(match, key) {
-  return match && inRange(match.week, 1, 999) && key === matchPrefix + match.week
+function validMatch(match) {
+  return match && inRange(match.week, 1, 999)
     && inRange(match.team, 0, 99) && inRange(match.opponent, 0, 99)
+    && typeof match.opponentName === 'string' && match.opponentName.trim().length > 0 && match.opponentName.length <= 100
     && Array.isArray(match.goals) && match.goals.length === match.team && match.goals.every(validGoal);
 }
 
-function readMatches() {
+function readPreviousMatches() {
   const records = [];
   try {
     for (let index = 0; index < localStorage.length; index += 1) {
       const key = localStorage.key(index);
-      if (!key?.startsWith(matchPrefix)) continue;
+      if (!key?.startsWith(previousMatchPrefix)) continue;
       try {
         const match = JSON.parse(localStorage.getItem(key));
-        if (validMatch(match, key)) records.push(match);
+        if (!match || key !== previousMatchPrefix + match.week) continue;
+        const previous = { ...match, opponentName: match.opponentName || 'Opponent' };
+        if (validMatch(previous)) records.push(previous);
       } catch (error) {
         if (!(error instanceof SyntaxError)) throw error;
       }
     }
   } catch {
-    storageUnavailable = true;
-    document.querySelector('#save-note').textContent = 'Browser storage is unavailable. Matches cannot be saved.';
-    return matches;
+    return records;
   }
   return records.sort((first, second) => second.week - first.week);
+}
+
+async function githubRequest(url, options = {}) {
+  const response = await fetch(url, {
+    cache: 'no-store',
+    credentials: 'omit',
+    redirect: 'error',
+    ...options,
+    headers: { Accept: 'application/vnd.github+json', ...options.headers }
+  });
+  if (!response.ok) throw Object.assign(new Error('GitHub request failed'), { status: response.status });
+  return response.json();
+}
+
+async function readSharedResults(token = '') {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const file = await githubRequest(`${resultsEndpoint}?ref=${resultsBranch}`, { headers });
+  const bytes = Uint8Array.from(atob(file.content), char => char.charCodeAt(0));
+  const data = JSON.parse(new TextDecoder().decode(bytes));
+  if (file.encoding !== 'base64' || typeof file.sha !== 'string' || !Array.isArray(data.matches)
+    || !data.matches.every(validMatch) || new Set(data.matches.map(match => match.week)).size !== data.matches.length) {
+    throw new Error('Shared match history is invalid');
+  }
+  return { sha: file.sha, records: data.matches.sort((first, second) => second.week - first.week) };
+}
+
+function encodeResults(records) {
+  const bytes = new TextEncoder().encode(`${JSON.stringify({ matches: records }, null, 2)}\n`);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+async function saveSharedMatch(match, baseline) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const { sha, records } = await readSharedResults(editorToken);
+    const current = records.find(record => record.week === match.week);
+    if (JSON.stringify(current) === JSON.stringify(match)) return records;
+    if (JSON.stringify(current) !== JSON.stringify(baseline)) {
+      throw Object.assign(new Error('Gameweek has changed'), { changed: true });
+    }
+    const updated = records.filter(record => record.week !== match.week);
+    updated.push(match);
+    updated.sort((first, second) => second.week - first.week);
+    try {
+      await githubRequest(resultsEndpoint, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${editorToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          branch: resultsBranch,
+          sha,
+          message: `Save Expected Toulouse gameweek ${match.week}`,
+          content: encodeResults(updated)
+        })
+      });
+      return updated;
+    } catch (error) {
+      if (error.status !== 409 || attempt > 0) throw error;
+    }
+  }
 }
 
 function playerLabel(player) {
@@ -90,21 +163,24 @@ function renderSquad(stats) {
 }
 
 function scoreLine(match) {
-  return `Expected Toulouse ${match.team}–${match.opponent} Opponent`;
+  return `Expected Toulouse ${match.team}–${match.opponent} ${match.opponentName}`;
 }
 
-function renderHistory() {
+function renderHistory(container, records, editable = false) {
   const cards = document.createDocumentFragment();
-  for (const match of matches) {
+  for (const match of records) {
     const card = element('article', undefined, 'match-card');
     const top = element('div', undefined, 'match-card-top');
     const title = element('div');
     title.append(element('h3', `Gameweek ${match.week}`), element('p', scoreLine(match), 'match-score'));
-    const edit = element('button', 'Edit', 'secondary');
-    edit.type = 'button';
-    edit.setAttribute('aria-label', `Edit gameweek ${match.week}`);
-    edit.dataset.week = match.week;
-    top.append(title, edit);
+    top.append(title);
+    if (editable) {
+      const edit = element('button', 'Edit', 'secondary');
+      edit.type = 'button';
+      edit.setAttribute('aria-label', `Edit gameweek ${match.week}`);
+      edit.dataset.week = match.week;
+      top.append(edit);
+    }
     card.append(top);
 
     if (match.goals.length) {
@@ -122,35 +198,31 @@ function renderHistory() {
     }
     cards.append(card);
   }
-  history.replaceChildren(cards);
-  document.querySelector('#empty-log').hidden = matches.length > 0;
+  container.replaceChildren(cards);
 }
 
 function render() {
   const stats = new Map(players.map(player => [player, { goals: 0, assists: 0 }]));
   const keeperMatches = [];
   let goals = 0;
-  let assists = 0;
   for (const match of matches) {
     goals += match.team;
     if (match.team > 0 && match.opponent === 0) keeperMatches.push(match);
     for (const goal of match.goals) {
       if (stats.has(goal.scorer)) stats.get(goal.scorer).goals += 1;
-      if (goal.assist) {
-        stats.get(goal.assist).assists += 1;
-        assists += 1;
-      }
+      if (goal.assist) stats.get(goal.assist).assists += 1;
     }
   }
   document.querySelector('#team-goals').textContent = goals;
-  document.querySelector('#team-assists').textContent = assists;
   document.querySelector('#team-clean-sheets').textContent = keeperMatches.length;
   document.querySelector('#keeper-counter').textContent = keeperMatches.length;
   const list = document.querySelector('#keeper-matches');
   list.replaceChildren(...keeperMatches.map(match => element('li', `Gameweek ${match.week} · ${scoreLine(match)}`)));
   list.hidden = keeperMatches.length === 0;
   renderSquad(stats);
-  renderHistory();
+  renderHistory(history, matches, true);
+  emptyLog.hidden = matches.length > 0 && !loadFailed;
+  emptyLog.textContent = loadFailed ? 'Could not load the latest shared results. Try Refresh results.' : 'No shared matches recorded yet.';
 }
 
 function setFeedback(message) {
@@ -170,6 +242,7 @@ function loadWeek(week) {
   weekInput.value = week;
   teamInput.value = existing?.team ?? '';
   opponentInput.value = existing?.opponent ?? '';
+  opponentNameInput.value = existing?.opponentName ?? '';
   scoreHeading.textContent = existing ? `Edit gameweek ${week}` : 'Record a match';
   draft = { week, baseline: existing, goals: existing?.goals ?? [] };
   setFeedback('');
@@ -239,10 +312,16 @@ scoreForm.addEventListener('submit', event => {
   const week = weekInput.valueAsNumber;
   const team = teamInput.valueAsNumber;
   const opponent = opponentInput.valueAsNumber;
+  const opponentName = opponentNameInput.value.trim();
   if (!inRange(week, 1, 999) || !inRange(team, 0, 99) || !inRange(opponent, 0, 99)) return;
+  if (!opponentName) {
+    setFeedback('Enter the opponent’s name.');
+    opponentNameInput.focus();
+    return;
+  }
   const existing = matches.find(match => match.week === week);
-  const goals = draft.week === week ? draft.goals : existing?.goals ?? [];
-  draft = { week, team, opponent, goals, baseline: draft.week === week ? draft.baseline : existing };
+  const goals = draft?.week === week ? draft.goals : existing?.goals ?? [];
+  draft = { week, team, opponent, opponentName, goals, baseline: draft?.week === week ? draft.baseline : existing };
   goalFields.replaceChildren(...Array.from({ length: team }, (_, index) => makeGoalFields(index, goals[index])));
   document.querySelector('#match-score').textContent = `Gameweek ${week} · ${scoreLine(draft)}`;
   document.querySelector('#no-goals').hidden = team > 0;
@@ -254,36 +333,61 @@ scoreForm.addEventListener('submit', event => {
 });
 
 document.querySelector('#change-score').addEventListener('click', () => {
+  if (saving) return;
   draft.goals = draftGoals();
   setFeedback('');
   showScoreForm(true);
 });
 
+async function publishMatch() {
+  if (saving) return;
+  const { week, team, opponent, opponentName, baseline } = draft;
+  const match = { week, team, opponent, opponentName, goals: draftGoals() };
+  if (!validMatch(match)) return;
+  saving = true;
+  resultsVersion += 1;
+  saveButton.disabled = true;
+  setFeedback('Saving to GitHub…');
+  try {
+    matches = await saveSharedMatch(match, baseline);
+    loadFailed = false;
+    render();
+    loadWeek(nextWeek());
+    setFeedback(`Gameweek ${week} saved to the shared history.`);
+    scoreHeading.focus();
+  } catch (error) {
+    if (error.changed) {
+      setFeedback('This gameweek changed. Refresh results, then reopen it from Match history before editing.');
+    } else if ([401, 403, 404].includes(error.status)) {
+      editorToken = '';
+      setFeedback('GitHub did not allow this save. Check that your token has Contents: Read and write for expected-toulouse, then try again.');
+    } else {
+      setFeedback('Could not save to GitHub. Your entry is still here. Try saving again.');
+    }
+  } finally {
+    saving = false;
+    saveButton.disabled = false;
+  }
+}
+
 goalsForm.addEventListener('submit', event => {
   event.preventDefault();
-  const { week, team, opponent, baseline } = draft;
-  const match = { week, team, opponent, goals: draftGoals() };
-  const key = matchPrefix + week;
-  if (!validMatch(match, key)) return;
-  try {
-    if (storageUnavailable) throw new Error('Storage is unavailable');
-    const current = JSON.parse(localStorage.getItem(key));
-    if (validMatch(current, key) && JSON.stringify(current) !== JSON.stringify(baseline)) {
-      setFeedback('This gameweek changed in another tab. Open it from Match history to edit the latest result.');
-      return;
-    }
-    localStorage.setItem(key, JSON.stringify(match));
-  } catch {
-    setFeedback('Could not save the match. Check that browser storage is available and try again.');
+  if (saving) return;
+  if (!editorToken) {
+    editorDialog.showModal();
     return;
   }
-
-  matches = readMatches();
-  render();
-  loadWeek(nextWeek());
-  setFeedback(`Gameweek ${week} saved.`);
-  scoreHeading.focus();
+  void publishMatch();
 });
+
+document.querySelector('#editor-form').addEventListener('submit', event => {
+  event.preventDefault();
+  editorToken = editorTokenInput.value.trim();
+  editorDialog.close();
+  void publishMatch();
+});
+editorDialog.addEventListener('close', () => { editorTokenInput.value = ''; });
+document.querySelector('#cancel-editor').addEventListener('click', () => editorDialog.close());
 
 const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
 function selectTab(selectedTab) {
@@ -314,17 +418,39 @@ for (const [index, tab] of tabs.entries()) {
 
 history.addEventListener('click', event => {
   const edit = event.target.closest('button[data-week]');
-  if (!edit) return;
+  if (!edit || saving) return;
   loadWeek(Number(edit.dataset.week));
   scoreHeading.focus();
 });
 
-window.addEventListener('storage', event => {
-  if (event.key !== null && !event.key.startsWith(matchPrefix)) return;
-  matches = readMatches();
-  render();
-});
+async function refreshResults() {
+  if (saving || refreshButton.disabled) return;
+  refreshButton.disabled = true;
+  const version = resultsVersion;
+  lastRefresh = Date.now();
+  try {
+    const { records } = await readSharedResults();
+    if (version !== resultsVersion) return;
+    matches = records;
+    loadFailed = false;
+    if (!draft) loadWeek(nextWeek());
+  } catch {
+    if (version !== resultsVersion) return;
+    loadFailed = true;
+  } finally {
+    refreshButton.disabled = false;
+    if (version === resultsVersion) render();
+  }
+}
 
-matches = readMatches();
-render();
-loadWeek(nextWeek());
+refreshButton.addEventListener('click', () => void refreshResults());
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && Date.now() - lastRefresh >= 30000) void refreshResults();
+});
+const previousMatches = readPreviousMatches();
+if (previousMatches.length) {
+  document.querySelector('#local-history').hidden = false;
+  renderHistory(document.querySelector('#local-results'), previousMatches);
+}
+renderSquad(new Map(players.map(player => [player, { goals: 0, assists: 0 }])));
+void refreshResults();

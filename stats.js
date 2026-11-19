@@ -879,9 +879,7 @@ function selectTab(selectedTab, { fromLocation = false } = {}) {
   }
   if (fromLocation) return;
   if (commentsPlayer) showManagerComments();
-  if (selectedTab === injuriesTab) {
-    window.history.replaceState(null, '', '#injuries');
-  } else if (['#injuries', '#squad'].includes(location.hash) || location.hash.startsWith(commentsHashPrefix)) {
+  if (['#injuries', '#squad'].includes(location.hash) || location.hash.startsWith(commentsHashPrefix)) {
     window.history.replaceState(null, '', location.pathname + location.search);
   }
 }
@@ -894,13 +892,12 @@ function syncViewFromHash() {
     if (profileDialog.open) profileDialog.close();
     selectTab(squadTab, { fromLocation: true });
     showManagerComments(player);
+  } else if (hash === '#injuries') {
+    selectTab(injuriesTab);
   } else if (hash === '#squad' || commentsPlayer) {
     showManagerComments();
-    const destination = hash === '#injuries' ? injuriesTab : squadTab;
-    selectTab(destination, { fromLocation: true });
-    destination.focus();
-  } else if (hash === '#injuries') {
-    selectTab(injuriesTab, { fromLocation: true });
+    selectTab(squadTab, { fromLocation: true });
+    squadTab.focus();
   }
 }
 

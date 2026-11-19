@@ -1,6 +1,10 @@
 'use strict';
 
 const players = ['Zach', 'Boyce', 'Kiran', 'Ben 2', 'Billy', 'Potter', 'Will', 'James', 'Luca', 'Matty'];
+const playerProfiles = {
+  Zach: { position: 'Goalkeeper' },
+  Boyce: { injury: { outUntil: 'mid-February 2027', month: '2027-02' } }
+};
 const previousMatchPrefix = 'expected-toulouse:matches:v1:';
 const resultsEndpoint = 'https://api.github.com/repos/kiranfinamordamania/expected-toulouse/contents/matches.json';
 const resultsBranch = 'match-data';
@@ -15,6 +19,8 @@ const opponentInput = document.querySelector('#opponent-score');
 const opponentNameInput = document.querySelector('#opponent-name');
 const feedback = document.querySelector('#match-feedback');
 const goalFields = document.querySelector('#goal-fields');
+const lineupOptions = document.querySelector('#lineup-options');
+const profileDialog = document.querySelector('#profile-dialog');
 const history = document.querySelector('#week-log');
 const historyHeading = document.querySelector('#history-heading');
 const historyFeedback = document.querySelector('#history-feedback');
@@ -25,6 +31,8 @@ const editorDialog = document.querySelector('#editor-dialog');
 const editorTokenInput = document.querySelector('#editor-token');
 const deleteDialog = document.querySelector('#delete-dialog');
 let matches = [];
+let squadStats = emptySquadStats();
+let openProfile;
 let draft;
 let loadedWeek;
 let editorToken = '';
@@ -57,7 +65,9 @@ function validMatch(match) {
   return match && inRange(match.week, 1, 999)
     && inRange(match.team, 0, 99) && inRange(match.opponent, 0, 99)
     && typeof match.opponentName === 'string' && match.opponentName.trim().length > 0 && match.opponentName.length <= 100
-    && Array.isArray(match.goals) && match.goals.length === match.team && match.goals.every(validGoal);
+    && Array.isArray(match.goals) && match.goals.length === match.team && match.goals.every(validGoal)
+    && (match.lineup === undefined || (Array.isArray(match.lineup) && match.lineup.length > 0
+      && match.lineup.every(player => players.includes(player)) && new Set(match.lineup).size === match.lineup.length));
 }
 
 function readPreviousMatches() {
@@ -143,9 +153,70 @@ async function writeSharedMatch(week, baseline, replacement) {
 
 function playerLabel(player) {
   const identity = element('div', undefined, 'player');
-  identity.textContent = player;
+  const profile = element('button', player, 'profile-link');
+  profile.type = 'button';
+  profile.setAttribute('aria-haspopup', 'dialog');
+  profile.addEventListener('click', () => {
+    openProfile = player;
+    renderProfile(player);
+    profileDialog.showModal();
+  });
+  identity.append(profile);
   if (player === 'Zach') identity.append(element('span', 'GK', 'keeper-tag'));
   return identity;
+}
+
+function emptySquadStats() {
+  return new Map(players.map(player => [player, { played: 0, goals: 0, assists: 0, unknown: 0 }]));
+}
+
+function renderProfile(player) {
+  const { position, injury, photo, bio } = playerProfiles[player] ?? {};
+  const { played, goals, assists, unknown } = squadStats.get(player);
+  const image = document.querySelector('#profile-photo');
+  const initial = document.querySelector('#profile-initial');
+  if (photo) {
+    image.src = photo;
+    image.alt = `${player}’s profile photo`;
+  } else {
+    image.removeAttribute('src');
+    image.alt = '';
+  }
+  image.hidden = !photo;
+  initial.hidden = Boolean(photo);
+  initial.textContent = player === 'Ben 2' ? 'B2' : player[0];
+
+  document.querySelector('#profile-title').textContent = player;
+  document.querySelector('#profile-played').textContent = played;
+  document.querySelector('#profile-goals').textContent = goals;
+  document.querySelector('#profile-assists').textContent = assists;
+  document.querySelector('#profile-position').textContent = position ?? 'Not set';
+  document.querySelector('#profile-injury').textContent = injury ? `Out until ${injury.outUntil}` : 'No injury listed';
+  document.querySelector('#profile-bio').textContent = bio ?? 'Bio coming later.';
+
+  const note = document.querySelector('#profile-attendance');
+  note.hidden = unknown === 0;
+  note.textContent = unknown === 1 ? 'Attendance is unknown for 1 match.' : `Attendance is unknown for ${unknown} matches.`;
+}
+
+document.querySelector('#close-profile').addEventListener('click', () => profileDialog.close());
+profileDialog.addEventListener('close', () => { openProfile = undefined; });
+
+function renderInjuries() {
+  const rows = document.createDocumentFragment();
+  for (const player of players) {
+    const injury = playerProfiles[player]?.injury;
+    if (!injury) continue;
+    const row = element('tr');
+    const name = element('th', player);
+    name.scope = 'row';
+    const until = element('time', injury.outUntil);
+    until.dateTime = injury.month;
+    row.append(name);
+    row.insertCell().append(until);
+    rows.append(row);
+  }
+  document.querySelector('#injured-players').replaceChildren(rows);
 }
 
 function renderSquad(stats) {
@@ -221,17 +292,29 @@ function renderLeader(stats, metric, id, unit) {
 }
 
 function render() {
-  const stats = new Map(players.map(player => [player, { goals: 0, assists: 0 }]));
+  const stats = emptySquadStats();
   const keeperMatches = [];
   let goals = 0;
   for (const match of matches) {
+    const participants = new Set(match.lineup);
     goals += match.team;
     if (match.team > 0 && match.opponent === 0) keeperMatches.push(match);
     for (const goal of match.goals) {
-      if (stats.has(goal.scorer)) stats.get(goal.scorer).goals += 1;
-      if (goal.assist) stats.get(goal.assist).assists += 1;
+      if (stats.has(goal.scorer)) {
+        stats.get(goal.scorer).goals += 1;
+        participants.add(goal.scorer);
+      }
+      if (goal.assist) {
+        stats.get(goal.assist).assists += 1;
+        participants.add(goal.assist);
+      }
+    }
+    for (const [player, totals] of stats) {
+      if (participants.has(player)) totals.played += 1;
+      else if (!match.lineup) totals.unknown += 1;
     }
   }
+  squadStats = stats;
   document.querySelector('#team-goals').textContent = goals;
   document.querySelector('#team-clean-sheets').textContent = keeperMatches.length;
   renderLeader(stats, 'goals', 'top-scorer', 'goal');
@@ -241,6 +324,7 @@ function render() {
   list.replaceChildren(...keeperMatches.map(match => element('li', `Gameweek ${match.week} · ${scoreLine(match)}`)));
   list.hidden = keeperMatches.length === 0;
   renderSquad(stats);
+  if (profileDialog.open && openProfile) renderProfile(openProfile);
   renderHistory(history, matches, true);
   emptyLog.hidden = matches.length > 0 && !loadFailed;
   emptyLog.textContent = loadFailed ? 'Could not load the latest shared results. Try Refresh results.' : 'No shared matches recorded yet.';
@@ -276,7 +360,7 @@ function loadWeek(week) {
   opponentInput.value = existing?.opponent ?? '';
   opponentNameInput.value = existing?.opponentName ?? '';
   scoreHeading.textContent = existing ? `Edit gameweek ${week}` : 'Record a match';
-  draft = { week, baseline: existing, goals: existing?.goals ?? [] };
+  draft = { week, baseline: existing, goals: existing?.goals ?? [], lineup: existing?.lineup ?? [] };
   setFeedback('');
   showScoreForm();
 }
@@ -334,6 +418,23 @@ function draftGoals() {
   }));
 }
 
+function renderLineup(selected) {
+  const options = players.map(player => {
+    const label = element('label');
+    const checkbox = element('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = player;
+    checkbox.checked = selected.includes(player);
+    label.append(checkbox, player);
+    return label;
+  });
+  lineupOptions.replaceChildren(...options);
+}
+
+function draftLineup() {
+  return Array.from(lineupOptions.querySelectorAll('input:checked'), input => input.value);
+}
+
 weekInput.addEventListener('input', () => {
   const week = weekInput.valueAsNumber;
   if (inRange(week, 1, 999) && week !== loadedWeek) loadWeek(week);
@@ -353,8 +454,10 @@ scoreForm.addEventListener('submit', event => {
   }
   const existing = matches.find(match => match.week === week);
   const goals = draft?.week === week ? draft.goals : existing?.goals ?? [];
-  draft = { week, team, opponent, opponentName, goals, baseline: draft?.week === week ? draft.baseline : existing };
+  const lineup = draft?.week === week ? draft.lineup : existing?.lineup ?? [];
+  draft = { week, team, opponent, opponentName, goals, lineup, baseline: draft?.week === week ? draft.baseline : existing };
   goalFields.replaceChildren(...Array.from({ length: team }, (_, index) => makeGoalFields(index, goals[index])));
+  renderLineup(lineup);
   document.querySelector('#match-score').textContent = `Gameweek ${week} · ${scoreLine(draft)}`;
   document.querySelector('#no-goals').hidden = team > 0;
   detailsHeading.textContent = team > 0 ? 'Assign goals' : 'Confirm match';
@@ -367,6 +470,7 @@ scoreForm.addEventListener('submit', event => {
 document.querySelector('#change-score').addEventListener('click', () => {
   if (saving) return;
   draft.goals = draftGoals();
+  draft.lineup = draftLineup();
   setFeedback('');
   showScoreForm(true);
 });
@@ -402,6 +506,8 @@ async function updateSharedHistory(week, baseline, replacement, report) {
 async function publishMatch() {
   const { week, team, opponent, opponentName, baseline } = draft;
   const match = { week, team, opponent, opponentName, goals: draftGoals() };
+  const lineup = draftLineup();
+  if (lineup.length) match.lineup = lineup;
   if (!validMatch(match) || !await updateSharedHistory(week, baseline, match, setFeedback)) return;
   loadWeek(nextWeek());
   setFeedback(`Gameweek ${week} saved to the shared history.`);
@@ -477,6 +583,7 @@ document.querySelector('#confirm-delete').addEventListener('click', () => {
 deleteDialog.addEventListener('close', () => { deleteTarget = undefined; });
 
 const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+const injuriesTab = document.querySelector('#injuries-tab');
 function selectTab(selectedTab) {
   for (const tab of tabs) {
     const selected = tab === selectedTab;
@@ -484,6 +591,8 @@ function selectTab(selectedTab) {
     tab.tabIndex = selected ? 0 : -1;
     document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;
   }
+  if (selectedTab === injuriesTab && location.hash !== '#injuries') window.history.replaceState(null, '', '#injuries');
+  if (selectedTab !== injuriesTab && location.hash === '#injuries') window.history.replaceState(null, '', location.pathname + location.search);
 }
 
 for (const [index, tab] of tabs.entries()) {
@@ -535,5 +644,10 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden && Date.now() - lastRefresh >= 30000) void refreshResults();
 });
 renderLocalHistory();
-renderSquad(new Map(players.map(player => [player, { goals: 0, assists: 0 }])));
+renderSquad(squadStats);
+renderInjuries();
+if (location.hash === '#injuries') selectTab(injuriesTab);
+window.addEventListener('hashchange', () => {
+  if (location.hash === '#injuries') selectTab(injuriesTab);
+});
 void refreshResults();

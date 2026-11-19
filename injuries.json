@@ -2,8 +2,8 @@
   "injuries": [
     {
       "player": "Boyce",
-      "type": "",
-      "returnDate": "2027-02"
+      "type": "Broken foot",
+      "returnDate": "2027-02-14"
     }
   ]
 }

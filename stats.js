@@ -62,6 +62,13 @@ const playerProfiles = {
   },
   Matty: { number: 3, position: 'Defender', photo: './photos/matty.webp', photoCrop: [46.14, 23.27, 176], bio: 'Hunk, ultra slow defender', similarPlayer: 'Per Mertesacker' }
 };
+const positionOrder = { Goalkeeper: 0, Defender: 1, Midfielder: 2, Forward: 3 };
+const squadDisplayOrder = [...players].sort((first, second) => {
+  const a = playerProfiles[first];
+  const b = playerProfiles[second];
+  const positionDifference = (positionOrder[a.position] ?? 4) - (positionOrder[b.position] ?? 4);
+  return positionDifference || (a.number ?? Infinity) - (b.number ?? Infinity);
+});
 const previousMatchPrefix = 'expected-toulouse:matches:v1:';
 const editorTokenKey = 'expected-toulouse:editor-token:v1';
 const resultsEndpoint = 'https://api.github.com/repos/kiranfinamordamania/expected-toulouse/contents/matches.json';
@@ -317,7 +324,7 @@ function renderInjuries() {
 
 function renderSquad(stats) {
   const rows = document.createDocumentFragment();
-  for (const player of players) {
+  for (const player of squadDisplayOrder) {
     const row = element('tr');
     const heading = element('th');
     heading.scope = 'row';

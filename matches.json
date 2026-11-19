@@ -1,20 +1,3 @@
 {
-  "matches": [
-    {
-      "week": 1,
-      "team": 2,
-      "opponent": 0,
-      "opponentName": "Inter YaVan FC",
-      "goals": [
-        {
-          "scorer": "Kiran",
-          "assist": "Boyce"
-        },
-        {
-          "scorer": "Potter",
-          "assist": "Kiran"
-        }
-      ]
-    }
-  ]
+  "matches": []
 }

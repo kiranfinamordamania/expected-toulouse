@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#281344">
+  <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
+  <title>Expected Toulouse · Match Stats</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./stats.js" defer></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner wrap">
+      <div class="crest" aria-hidden="true">ET</div>
+      <div class="hero-copy">
+        <p class="eyebrow">Five-a-side football</p>
+        <h1>Expected Toulouse</h1>
+      </div>
+      <div class="pitch" aria-hidden="true"><div class="pitch-circle"></div></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="totals" aria-label="Team totals">
+      <div class="total-card"><p>Team goals</p><strong id="team-goals">0</strong></div>
+      <div class="total-card"><p>Team assists</p><strong id="team-assists">0</strong></div>
+      <div class="total-card"><p>Clean sheets</p><strong id="team-clean-sheets">0</strong></div>
+    </section>
+
+    <section class="board" aria-label="Player statistics">
+      <div class="tab-bar" role="tablist" aria-label="Stats views">
+        <button type="button" id="log-tab" role="tab" aria-selected="true" aria-controls="log-panel">Gameweeks</button>
+        <button type="button" id="squad-tab" role="tab" aria-selected="false" aria-controls="squad-panel" tabindex="-1">Squad Stats</button>
+        <button type="button" id="keeper-tab" role="tab" aria-selected="false" aria-controls="keeper-panel" tabindex="-1">Clean Sheets</button>
+      </div>
+
+      <section id="log-panel" role="tabpanel" aria-labelledby="log-tab">
+        <div class="match-entry">
+          <form id="score-form">
+            <h2 id="score-heading" tabindex="-1">Record a match</h2>
+            <div class="score-fields">
+              <label>Gameweek<input id="gameweek" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" required></label>
+              <label>Expected Toulouse goals<input id="team-score" type="number" min="0" max="99" step="1" inputmode="numeric" required></label>
+              <label>Opponent goals<input id="opponent-score" type="number" min="0" max="99" step="1" inputmode="numeric" required></label>
+            </div>
+            <button class="primary" type="submit">Continue</button>
+          </form>
+
+          <form id="goals-form" hidden>
+            <h2 id="details-heading" tabindex="-1">Assign goals</h2>
+            <p id="match-score" class="match-score"></p>
+            <p id="no-goals" hidden>No Expected Toulouse goals to assign.</p>
+            <div id="goal-fields" class="goal-fields"></div>
+            <div class="form-actions">
+              <button class="primary" type="submit">Save match</button>
+              <button class="secondary" id="change-score" type="button">Change score</button>
+            </div>
+          </form>
+          <p id="match-feedback" class="match-feedback" role="status" hidden></p>
+        </div>
+
+        <div class="match-log">
+          <h2>Match history</h2>
+          <p class="empty-log" id="empty-log">No matches recorded yet.</p>
+          <div id="week-log"></div>
+        </div>
+      </section>
+
+      <section id="squad-panel" role="tabpanel" aria-labelledby="squad-tab" hidden>
+        <div class="board-heading">
+          <h2>Squad Stats</h2>
+          <p>10 players</p>
+        </div>
+        <table>
+          <thead>
+            <tr><th scope="col">Player</th><th scope="col">Goals</th><th scope="col">Assists</th></tr>
+          </thead>
+          <tbody id="players"></tbody>
+        </table>
+      </section>
+
+      <section id="keeper-panel" role="tabpanel" aria-labelledby="keeper-tab" hidden>
+        <div class="board-heading">
+          <h2>Clean Sheets</h2>
+          <p>Goalkeeper</p>
+        </div>
+        <div class="keeper-row">
+          <div class="player">
+            <span class="initials is-keeper" aria-hidden="true">Z</span>
+            <div>Zach <span class="keeper-tag">GK</span></div>
+          </div>
+          <strong id="keeper-counter">0</strong>
+        </div>
+        <p class="keeper-note">Zach earns a clean sheet each time Expected Toulouse wins without conceding.</p>
+        <ul id="keeper-matches" class="keeper-matches" hidden></ul>
+      </section>
+
+      <p class="save-note" id="save-note">Stats are saved in this browser.</p>
+    </section>
+  </main>
+</body>
+</html>

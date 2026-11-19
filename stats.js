@@ -31,6 +31,8 @@ const playerProfiles = {
   'Ben 1': {
     number: 9,
     position: 'Forward',
+    photo: './photos/ben-1.webp',
+    photoCrop: [57.4, 32, 255],
     bio: 'Giraffe on ice-skates',
     similarPlayer: 'Ellis Simms'
   },

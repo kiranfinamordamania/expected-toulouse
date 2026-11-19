@@ -8,8 +8,8 @@
   <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
   <title>Expected Toulouse · Match Stats</title>
   <link rel="icon" href="./expected-toulouse-crest.png" type="image/png">
-  <link rel="stylesheet" href="./styles.css?v=seasons-1">
-  <script src="./stats.js?v=seasons-1" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=remember-token-1">
+  <script src="./stats.js?v=remember-token-1" defer></script>
 </head>
 <body>
   <header class="masthead">
@@ -79,6 +79,7 @@
                 <button class="secondary" id="change-score" type="button">Change score</button>
               </div>
             </form>
+            <button class="secondary" id="forget-token" type="button">Forget token</button>
           </div>
           <p id="match-feedback" class="match-feedback" role="status" hidden></p>
         </div>
@@ -174,7 +175,7 @@
       <p>Create a fine-grained token on GitHub with access to <strong>only the expected-toulouse repository</strong> and <strong>Contents: Read and write</strong>.</p>
       <p><a href="https://github.com/settings/personal-access-tokens/new?name=Expected+Toulouse+match+editor&amp;target_name=kiranfinamordamania&amp;expires_in=30&amp;contents=write" target="_blank" rel="noopener noreferrer">Create a GitHub editing token</a></p>
       <label>GitHub editing token<input id="editor-token" type="password" pattern="github_pat_[A-Za-z0-9_]+" autocomplete="off" spellcheck="false" required></label>
-      <p>The token is held in this tab until you reload or close it.</p>
+      <p>Your token is remembered in this browser. Use <strong>Forget token</strong> to remove it.</p>
       <p id="editor-feedback" role="status" hidden></p>
       <div class="form-actions">
         <button class="primary" id="connect-editor" type="submit">Unlock editing</button>

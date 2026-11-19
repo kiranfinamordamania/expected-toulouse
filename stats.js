@@ -44,6 +44,7 @@ const playerProfiles = {
   Matty: { number: 3, bio: 'Hunk, ultra slow defender', similarPlayer: 'Per Mertesacker' }
 };
 const previousMatchPrefix = 'expected-toulouse:matches:v1:';
+const editorTokenKey = 'expected-toulouse:editor-token:v1';
 const resultsEndpoint = 'https://api.github.com/repos/kiranfinamordamania/expected-toulouse/contents/matches.json';
 const resultsBranch = 'match-data';
 const uncredited = 'uncredited';
@@ -53,6 +54,8 @@ const matchSeasonInput = document.querySelector('#match-season');
 const competitionInput = document.querySelector('#match-competition');
 const entryGate = document.querySelector('#entry-gate');
 const entryForms = document.querySelector('#entry-forms');
+const unlockEntry = document.querySelector('#unlock-entry');
+const forgetTokenButton = document.querySelector('#forget-token');
 const scoreForm = document.querySelector('#score-form');
 const goalsForm = document.querySelector('#goals-form');
 const scoreHeading = document.querySelector('#score-heading');
@@ -187,8 +190,10 @@ function encodeResults(records) {
 
 async function writeSharedMatch(match, baseline, replacement) {
   const key = matchKey(match);
+  const token = editorToken;
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const { sha, records } = await readSharedResults(editorToken);
+    const { sha, records } = await readSharedResults(token);
+    if (editorToken !== token) throw new Error('Editing is locked');
     const current = records.find(record => matchKey(record) === key);
     if (JSON.stringify(current) === JSON.stringify(replacement)) return records;
     if (JSON.stringify(current) !== JSON.stringify(baseline)) {
@@ -200,7 +205,7 @@ async function writeSharedMatch(match, baseline, replacement) {
     try {
       await githubRequest(resultsEndpoint, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${editorToken}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           branch: resultsBranch,
           sha,
@@ -588,10 +593,12 @@ document.querySelector('#change-score').addEventListener('click', () => {
 
 async function updateSharedHistory(match, baseline, replacement, report) {
   if (saving || !editorToken) return false;
+  const token = editorToken;
   const action = replacement ? 'save' : 'delete';
   saving = true;
   resultsVersion += 1;
   saveButton.disabled = true;
+  forgetTokenButton.disabled = true;
   report(replacement ? 'Saving to GitHub…' : 'Deleting from shared history…');
   try {
     matches = await writeSharedMatch(match, baseline, replacement);
@@ -600,9 +607,8 @@ async function updateSharedHistory(match, baseline, replacement, report) {
   } catch (error) {
     if (error.changed) {
       report('This match changed. Refresh results and check the latest score before trying again.');
-    } else if ([401, 403, 404].includes(error.status)) {
-      editorToken = '';
-      syncEntryAccess();
+    } else if (tokenRejected(error)) {
+      forgetToken(token);
       report(`GitHub did not allow this ${action === 'save' ? 'save' : 'deletion'}. Check that your token has Contents: Read and write for expected-toulouse, then try again.`);
     } else {
       report(`Could not ${action} the match on GitHub. Try again.`);
@@ -611,6 +617,7 @@ async function updateSharedHistory(match, baseline, replacement, report) {
   } finally {
     saving = false;
     saveButton.disabled = false;
+    forgetTokenButton.disabled = false;
   }
 }
 
@@ -632,8 +639,43 @@ function syncEntryAccess() {
   entryForms.hidden = !editorToken;
 }
 
+function savedEditorToken() {
+  try {
+    const token = localStorage.getItem(editorTokenKey);
+    return /^github_pat_[A-Za-z0-9_]+$/.test(token ?? '') ? token : '';
+  } catch {
+    return '';
+  }
+}
+
+function rememberToken(token) {
+  try {
+    localStorage.setItem(editorTokenKey, token);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function forgetToken(token) {
+  if (editorToken === token) {
+    editorToken = '';
+    syncEntryAccess();
+  }
+  try {
+    if (localStorage.getItem(editorTokenKey) === token) localStorage.removeItem(editorTokenKey);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function tokenRejected(error) {
+  return [401, 403, 404].includes(error.status);
+}
+
 function withEditorAccess(request) {
-  if (saving || connecting) return;
+  if (saving || connecting || unlockEntry.disabled) return;
   if (editorToken) {
     void request();
     return;
@@ -643,7 +685,13 @@ function withEditorAccess(request) {
   editorDialog.showModal();
 }
 
-document.querySelector('#unlock-entry').addEventListener('click', () => withEditorAccess(() => scoreHeading.focus()));
+unlockEntry.addEventListener('click', () => withEditorAccess(() => scoreHeading.focus()));
+forgetTokenButton.addEventListener('click', () => {
+  if (saving || !editorToken) return;
+  const forgotten = forgetToken(editorToken);
+  setFeedback(forgotten ? 'Token removed. Match entry is locked.' : 'Match entry is locked. Clear this site’s browser data to remove the saved token.');
+  unlockEntry.focus();
+});
 goalsForm.addEventListener('submit', event => {
   event.preventDefault();
   if (editorToken && !saving) void publishMatch();
@@ -662,15 +710,17 @@ document.querySelector('#editor-form').addEventListener('submit', async event =>
     if (!editorDialog.open) return;
     resultsVersion += 1;
     editorToken = token;
+    const remembered = rememberToken(token);
     matches = records;
     loadFailed = false;
     render();
     if (!draft) loadMatch(nextMatch());
     syncEntryAccess();
+    setFeedback(remembered ? '' : 'This browser could not store the token. Editing is unlocked in this tab only.');
     editorDialog.close();
     if (request) void request();
   } catch (error) {
-    editorFeedback.textContent = [401, 403, 404].includes(error.status)
+    editorFeedback.textContent = tokenRejected(error)
       ? 'GitHub rejected this token. Check its expiry and repository permissions.'
       : 'Could not verify the token with GitHub. Try again.';
     editorFeedback.hidden = false;
@@ -773,20 +823,54 @@ async function refreshResults() {
   if (saving || refreshButton.disabled) return;
   refreshButton.disabled = true;
   const version = resultsVersion;
+  const savedToken = editorToken ? '' : savedEditorToken();
+  unlockEntry.disabled = Boolean(savedToken);
   lastRefresh = Date.now();
+  let restored = false;
   try {
-    const { records } = await readSharedResults();
+    let results;
+    try {
+      results = await readSharedResults(savedToken);
+      restored = Boolean(savedToken);
+    } catch (error) {
+      if (!savedToken || version !== resultsVersion) throw error;
+      if (tokenRejected(error)) {
+        forgetToken(savedToken);
+        setFeedback('Your saved token was rejected. Enter a current token to edit matches.');
+      } else {
+        setFeedback('Could not check your saved token. Use Refresh results to try again.');
+      }
+      results = await readSharedResults();
+    }
     if (version !== resultsVersion) return;
-    matches = records;
+    matches = results.records;
     loadFailed = false;
   } catch {
     if (version !== resultsVersion) return;
     loadFailed = true;
   } finally {
     refreshButton.disabled = false;
-    if (version === resultsVersion) render();
+    unlockEntry.disabled = false;
+    if (version === resultsVersion) {
+      render();
+      if (restored && savedEditorToken() === savedToken) {
+        editorToken = savedToken;
+        if (!draft) loadMatch(nextMatch());
+        setFeedback('');
+        syncEntryAccess();
+      }
+    }
   }
 }
+
+window.addEventListener('storage', event => {
+  if (event.storageArea !== localStorage || (event.key !== editorTokenKey && event.key !== null)) return;
+  if (editorToken && editorToken !== savedEditorToken()) {
+    editorToken = '';
+    syncEntryAccess();
+  }
+  void refreshResults();
+});
 
 refreshButton.addEventListener('click', () => void refreshResults());
 document.addEventListener('visibilitychange', () => {

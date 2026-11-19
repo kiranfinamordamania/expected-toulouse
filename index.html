@@ -8,8 +8,8 @@
   <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
   <title>Expected Toulouse · Match Stats</title>
   <link rel="icon" href="./expected-toulouse-crest.png" type="image/png">
-  <link rel="stylesheet" href="./styles.css?v=forever-profile-1">
-  <script src="./stats.js?v=forever-photo-1" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=injury-editor-1">
+  <script src="./stats.js?v=injury-editor-1" defer></script>
 </head>
 <body>
   <header class="masthead">
@@ -179,10 +179,23 @@
 
       <section id="injuries-panel" role="tabpanel" aria-labelledby="injuries-tab" hidden>
         <div class="board-heading"><h2>Injuries</h2></div>
-        <table class="injuries-table">
-          <thead><tr><th scope="col">Player</th><th scope="col">Expected out until</th></tr></thead>
+        <p id="injury-empty" class="empty-log" role="status">Loading injuries…</p>
+        <table class="injuries-table" hidden>
+          <thead><tr><th scope="col">Player</th><th scope="col">Type of injury</th><th scope="col">Expected return</th><th scope="col" id="injury-actions" hidden>Actions</th></tr></thead>
           <tbody id="injured-players"></tbody>
         </table>
+        <button class="primary" id="unlock-injuries" type="button">Log in to manage injuries</button>
+        <form id="injury-form" hidden>
+          <h3>Record an injury</h3>
+          <p class="field-help">Injury details and return dates are public once saved.</p>
+          <fieldset id="injury-fields" class="injury-fields score-fields" aria-label="Injury details">
+            <label>Player<select id="injury-player" required><option value="">Select a player</option></select></label>
+            <label>Expected return date<input id="injury-return" type="date" min="1900-01-01" max="9999-12-31" required></label>
+            <label class="injury-type-field">Type of injury<input id="injury-type" type="text" placeholder="Describe what happened" maxlength="160" required></label>
+          </fieldset>
+          <button class="primary" id="save-injury" type="submit">Save injury</button>
+        </form>
+        <p id="injury-feedback" class="match-feedback" role="status" hidden></p>
       </section>
 
       <p class="save-note">Saved matches are public and visible across browsers.</p>

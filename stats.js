@@ -16,7 +16,6 @@ const playerProfiles = {
     position: 'Defender',
     photo: './photos/boyce.webp',
     photoCrop: [49.26, 44.5, 270],
-    injury: { outUntil: 'mid-February 2027', month: '2027-02' },
     bio: 'General at the back, commanding the shape of the defence, can play with the ball at his feet.',
     similarPlayer: 'John Stones'
   },
@@ -80,6 +79,7 @@ const squadDisplayOrder = [...players].sort((first, second) => {
 const previousMatchPrefix = 'expected-toulouse:matches:v1:';
 const editorTokenKey = 'expected-toulouse:editor-token:v1';
 const resultsEndpoint = 'https://api.github.com/repos/kiranfinamordamania/expected-toulouse/contents/matches.json';
+const injuriesEndpoint = 'https://api.github.com/repos/kiranfinamordamania/expected-toulouse/contents/injuries.json';
 const resultsBranch = 'match-data';
 const uncredited = 'uncredited';
 const maxCommentLength = 500;
@@ -102,6 +102,11 @@ const opponentNameInput = document.querySelector('#opponent-name');
 const feedback = document.querySelector('#match-feedback');
 const goalFields = document.querySelector('#goal-fields');
 const lineupOptions = document.querySelector('#lineup-options');
+const injuryForm = document.querySelector('#injury-form');
+const injuryPlayer = document.querySelector('#injury-player');
+const injuryType = document.querySelector('#injury-type');
+const injuryReturn = document.querySelector('#injury-return');
+const unlockInjuries = document.querySelector('#unlock-injuries');
 const matchComments = document.querySelector('#match-comments');
 const commentFields = document.querySelector('#comment-fields');
 const profileDialog = document.querySelector('#profile-dialog');
@@ -117,6 +122,13 @@ const editorFeedback = document.querySelector('#editor-feedback');
 const connectEditor = document.querySelector('#connect-editor');
 const deleteDialog = document.querySelector('#delete-dialog');
 let matches = [];
+let injuries = [];
+let injuriesLoaded = false;
+let injuriesLoadFailed = false;
+let injuriesLoading = false;
+let injurySaving = false;
+let injuriesVersion = 0;
+let injuryDraftBaseline;
 let squadStats = emptySquadStats();
 let openProfile;
 let commentsPlayer;
@@ -224,8 +236,8 @@ async function readSharedResults(token = '') {
   return { sha: file.sha, records: sortMatches(data.matches) };
 }
 
-function encodeResults(records) {
-  const bytes = new TextEncoder().encode(`${JSON.stringify({ matches: records }, null, 2)}\n`);
+function encodeSharedData(data) {
+  const bytes = new TextEncoder().encode(`${JSON.stringify(data, null, 2)}\n`);
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary);
@@ -253,7 +265,7 @@ async function writeSharedMatch(match, baseline, replacement) {
           branch: resultsBranch,
           sha,
           message: `${replacement ? 'Save' : 'Delete'} ${matchTermLabel(match).toLowerCase()}`,
-          content: encodeResults(updated)
+          content: encodeSharedData({ matches: updated })
         })
       });
       return updated;
@@ -263,19 +275,79 @@ async function writeSharedMatch(match, baseline, replacement) {
   }
 }
 
+function validReturnDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}(?:-\d{2})?$/.test(value)) return false;
+  const date = value.length === 7 ? `${value}-01` : value;
+  const timestamp = Date.parse(date);
+  return inRange(Number(date.slice(0, 4)), 1900, 9999) && Number.isFinite(timestamp)
+    && new Date(timestamp).toISOString().slice(0, 10) === date;
+}
+
+async function readSharedInjuries(token = '') {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const file = await githubRequest(`${injuriesEndpoint}?ref=${resultsBranch}`, { headers });
+  if (file.encoding !== 'base64' || typeof file.sha !== 'string') throw new Error('Invalid injuries file');
+  const bytes = Uint8Array.from(atob(file.content), char => char.charCodeAt(0));
+  const { injuries: records } = JSON.parse(new TextDecoder().decode(bytes));
+  if (!Array.isArray(records) || !records.every(record => record && players.includes(record.player)
+    && typeof record.type === 'string' && record.type.length <= 160 && validReturnDate(record.returnDate))
+    || new Set(records.map(record => record.player)).size !== records.length) {
+    throw new Error('Invalid injuries file');
+  }
+  return { sha: file.sha, records };
+}
+
+async function writeSharedInjury(player, baseline, replacement, token) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const { sha, records } = await readSharedInjuries(token);
+    if (editorToken !== token) throw new Error('Editing is locked');
+    const current = records.find(record => record.player === player);
+    if (JSON.stringify(current) === JSON.stringify(replacement)) return records;
+    if (JSON.stringify(current) !== JSON.stringify(baseline)) {
+      throw Object.assign(new Error('Injury has changed'), { latestInjuries: records });
+    }
+    const updated = records.filter(record => record.player !== player);
+    if (replacement) updated.push(replacement);
+    try {
+      await githubRequest(injuriesEndpoint, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branch: resultsBranch, sha, message: 'Update shared injury list',
+          content: encodeSharedData({ injuries: updated }) })
+      });
+      return updated;
+    } catch (error) {
+      if (error.status !== 409 || attempt > 0) throw error;
+    }
+  }
+}
+
+function injuryReturnLabel(returnDate) {
+  const approximate = returnDate.length === 7;
+  const date = new Date(approximate ? `${returnDate}-01` : returnDate);
+  const format = approximate ? { month: 'long', year: 'numeric' } : { dateStyle: 'medium' };
+  const label = date.toLocaleDateString('en-GB', { ...format, timeZone: 'UTC' });
+  return approximate ? `mid-${label}` : label;
+}
+
 function showPlayerProfile(player) {
   openProfile = player;
   renderProfile(player);
   profileDialog.showModal();
 }
 
-function playerLabel(player) {
+function playerLabel(player, injury) {
   const identity = element('div', undefined, 'player');
   const profile = element('button', player, 'profile-link');
   profile.type = 'button';
   profile.setAttribute('aria-haspopup', 'dialog');
   profile.addEventListener('click', () => showPlayerProfile(player));
   identity.append(profile);
+  if (injury) {
+    const cross = element('span', '✚', 'injury-cross');
+    cross.setAttribute('aria-hidden', 'true');
+    identity.append(cross);
+  }
   return identity;
 }
 
@@ -284,7 +356,8 @@ function emptySquadStats() {
 }
 
 function renderProfile(player) {
-  const { number, position, injury, photo, photoCrop, bio, similarPlayer } = playerProfiles[player] ?? {};
+  const { number, position, photo, photoCrop, bio, similarPlayer } = playerProfiles[player] ?? {};
+  const injury = injuries.find(record => record.player === player);
   const stats = squadStats.get(player);
   const image = document.querySelector('#profile-photo');
   const initial = document.querySelector('#profile-initial');
@@ -316,7 +389,7 @@ function renderProfile(player) {
   document.querySelector('#profile-position').textContent = position ?? 'Not set';
   const injuryStatus = document.querySelector('#profile-injury');
   injuryStatus.parentElement.hidden = !stats;
-  injuryStatus.textContent = injury ? `Out until ${injury.outUntil}` : 'No injury listed';
+  injuryStatus.textContent = injury ? `Expected back ${injuryReturnLabel(injury.returnDate)}` : 'No injury listed';
   document.querySelector('#profile-bio').textContent = bio ?? 'Bio coming later.';
   document.querySelector('#profile-similar-player').textContent = similarPlayer ?? '';
   document.querySelector('#profile-comparison').hidden = !similarPlayer;
@@ -371,19 +444,37 @@ function showManagerComments(player) {
 
 function renderInjuries() {
   const rows = document.createDocumentFragment();
-  for (const player of players) {
-    const injury = playerProfiles[player]?.injury;
+  for (const player of squadDisplayOrder) {
+    const injury = injuries.find(record => record.player === player);
     if (!injury) continue;
     const row = element('tr');
     const name = element('th', player);
     name.scope = 'row';
-    const until = element('time', injury.outUntil);
-    until.dateTime = injury.month;
+    const until = element('time', injuryReturnLabel(injury.returnDate));
+    until.dateTime = injury.returnDate;
     row.append(name);
+    row.insertCell().textContent = injury.type || '—';
     row.insertCell().append(until);
+    if (editorToken) {
+      const remove = element('button', 'Remove', 'secondary remove-match');
+      remove.type = 'button';
+      remove.disabled = injurySaving;
+      remove.setAttribute('aria-label', `Remove injury for ${player}`);
+      remove.addEventListener('click', () => {
+        if (window.confirm(`Remove the injury for ${player}?`)) void updateInjury(player, injury);
+      });
+      row.insertCell().append(remove);
+    }
     rows.append(row);
   }
-  document.querySelector('#injured-players').replaceChildren(rows);
+  const list = document.querySelector('#injured-players');
+  list.replaceChildren(rows);
+  list.closest('table').hidden = injuries.length === 0;
+  document.querySelector('#injury-actions').hidden = !editorToken;
+  const empty = document.querySelector('#injury-empty');
+  empty.hidden = injuries.length > 0 && !injuriesLoadFailed;
+  empty.textContent = injuriesLoadFailed ? 'Could not load the latest injuries.'
+    : injuriesLoaded ? 'No injuries listed.' : 'Loading injuries…';
 }
 
 function renderSquad(stats) {
@@ -392,7 +483,9 @@ function renderSquad(stats) {
     const row = element('tr');
     const heading = element('th');
     heading.scope = 'row';
-    heading.append(playerLabel(player));
+    const injury = injuries.find(record => record.player === player);
+    heading.append(playerLabel(player, injury));
+    if (injury) heading.append(element('span', `Expected back ${injuryReturnLabel(injury.returnDate)}`, 'player-injury-note'));
     row.append(heading);
     const { position, number } = playerProfiles[player];
     row.insertCell().textContent = position ?? '—';
@@ -746,9 +839,103 @@ async function publishMatch() {
   scoreHeading.focus();
 }
 
+function setInjuryFeedback(message) {
+  const status = document.querySelector('#injury-feedback');
+  status.textContent = message;
+  status.hidden = !message;
+}
+
+function renderInjuryViews() {
+  renderInjuries();
+  renderSquad(squadStats);
+  if (profileDialog.open && openProfile) renderProfile(openProfile);
+}
+
+async function refreshInjuries() {
+  if (injuriesLoading || injurySaving) return;
+  injuriesLoading = true;
+  const version = injuriesVersion;
+  try {
+    const { records } = await readSharedInjuries(editorToken);
+    if (version !== injuriesVersion) return;
+    injuries = records;
+    injuriesLoaded = true;
+    injuriesLoadFailed = false;
+  } catch {
+    if (version === injuriesVersion) injuriesLoadFailed = true;
+  } finally {
+    injuriesLoading = false;
+    if (version === injuriesVersion) renderInjuryViews();
+  }
+}
+
+async function updateInjury(player, baseline, replacement) {
+  if (!editorToken || injurySaving) return;
+  const token = editorToken;
+  let saved = false;
+  injurySaving = true;
+  injuriesVersion += 1;
+  document.querySelector('#injury-fields').disabled = true;
+  document.querySelector('#save-injury').disabled = true;
+  renderInjuries();
+  setInjuryFeedback(replacement ? 'Saving injury…' : 'Removing injury…');
+  try {
+    injuries = await writeSharedInjury(player, baseline, replacement, token);
+    injuriesLoaded = true;
+    injuriesLoadFailed = false;
+    if (injuryPlayer.value === player) {
+      injuryForm.reset();
+      injuryDraftBaseline = undefined;
+    }
+    setInjuryFeedback(replacement ? `Injury saved for ${player}.` : `Injury removed for ${player}.`);
+    saved = true;
+  } catch (error) {
+    if (error.latestInjuries) {
+      injuries = error.latestInjuries;
+      injuriesLoaded = true;
+      injuriesLoadFailed = false;
+      if (injuryPlayer.value === player) injuryDraftBaseline = injuries.find(record => record.player === player);
+      setInjuryFeedback('This injury changed in another browser. Check the latest entry before trying again.');
+    } else if (tokenRejected(error)) {
+      forgetToken(token);
+      setInjuryFeedback('GitHub did not allow this change. Log in again with a token that has write access.');
+    } else {
+      setInjuryFeedback('Could not update the injury. Try again.');
+    }
+  } finally {
+    injurySaving = false;
+    document.querySelector('#injury-fields').disabled = false;
+    document.querySelector('#save-injury').disabled = false;
+    renderInjuryViews();
+    if (saved && editorToken) injuryPlayer.focus();
+  }
+}
+
+injuryPlayer.append(...squadDisplayOrder.map(player => makeOption(player)));
+injuryPlayer.addEventListener('change', () => {
+  const injury = injuries.find(record => record.player === injuryPlayer.value);
+  injuryDraftBaseline = injury;
+  injuryType.value = injury?.type ?? '';
+  injuryReturn.value = injury?.returnDate.length === 10 ? injury.returnDate : '';
+});
+injuryForm.addEventListener('submit', event => {
+  event.preventDefault();
+  const player = injuryPlayer.value;
+  const type = injuryType.value.trim();
+  const returnDate = injuryReturn.value;
+  if (!type || type.length > 160 || !players.includes(player) || returnDate.length !== 10 || !validReturnDate(returnDate)) {
+    setInjuryFeedback('Choose a player and enter the injury type and a valid return date.');
+    return;
+  }
+  void updateInjury(player, injuryDraftBaseline, { player, type, returnDate });
+});
+
 function syncEntryAccess() {
   entryGate.hidden = Boolean(editorToken);
   entryForms.hidden = !editorToken;
+  unlockInjuries.hidden = Boolean(editorToken);
+  injuryForm.hidden = !editorToken;
+  renderInjuries();
 }
 
 function savedEditorToken() {
@@ -798,6 +985,7 @@ function withEditorAccess(request) {
 }
 
 unlockEntry.addEventListener('click', () => withEditorAccess(() => scoreHeading.focus()));
+unlockInjuries.addEventListener('click', () => withEditorAccess(() => injuryPlayer.focus()));
 forgetTokenButton.addEventListener('click', () => {
   if (saving || !editorToken) return;
   const forgotten = forgetToken(editorToken);
@@ -954,6 +1142,7 @@ history.addEventListener('click', event => {
 
 async function refreshResults() {
   if (saving || refreshButton.disabled) return;
+  void refreshInjuries();
   refreshButton.disabled = true;
   const version = resultsVersion;
   const savedToken = editorToken ? '' : savedEditorToken();

@@ -276,7 +276,15 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 .forever-player span { display: block; margin-top: .15rem; color: var(--muted); font-size: .875rem; }
 .forever-number { color: var(--violet); font-weight: 700; white-space: nowrap; }
 .injuries-table th, .injuries-table td { text-align: left; padding-inline: .75rem; }
-.injuries-table td { font-weight: 400; }
+.injuries-table thead th:first-child { width: 24%; }
+.injuries-table td { font-weight: 400; overflow-wrap: anywhere; }
+#unlock-injuries, #injury-form { margin: .9rem 0; }
+#injury-form { width: min(100%, 34rem); padding: .85rem; border: 1px solid var(--line); }
+#injury-form h3 { margin-bottom: .35rem; color: var(--dark-violet); }
+.injury-fields { min-width: 0; padding: 0; border: 0; }
+.injury-type-field { grid-column: 1 / -1; }
+.injury-cross { color: #ae1c36; font-size: .875rem; }
+.player-injury-note { display: block; margin-top: .25rem; color: var(--danger); font-size: .75rem; font-weight: 400; line-height: 1.25; }
 .player { display: flex; align-items: center; gap: .45rem; line-height: 1.2; }
 .profile-link { border: 0; padding: .1rem 0; background: transparent; color: var(--violet); font-weight: 700; text-align: left; text-decoration: underline; text-underline-offset: .17em; }
 .profile-link:hover { color: var(--dark-violet); }
@@ -358,6 +366,8 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 @media (max-width: 42rem) {
   .wrap { width: calc(100% - 2rem); }
   .squad-table th, .squad-table td { font-size: .8rem; padding-inline: .25rem; }
+  .injuries-table th, .injuries-table td { font-size: .8rem; padding-inline: .3rem; }
+  .injuries-table .secondary { padding-inline: .3rem; font-size: .75rem; }
   .masthead-inner { min-height: 7.5rem; }
   .masthead-inner::after { right: -.75rem; }
   .masthead-subtitle { font-size: .875rem; }

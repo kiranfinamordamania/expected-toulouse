@@ -143,12 +143,8 @@ async function writeSharedMatch(week, baseline, replacement) {
 
 function playerLabel(player) {
   const identity = element('div', undefined, 'player');
-  const keeper = player === 'Zach';
-  const initials = element('span', player === 'Ben 2' ? 'B2' : player[0], keeper ? 'initials is-keeper' : 'initials');
-  initials.setAttribute('aria-hidden', 'true');
-  const name = element('div', player);
-  if (keeper) name.append(' ', element('span', 'GK', 'keeper-tag'));
-  identity.append(initials, name);
+  identity.textContent = player;
+  if (player === 'Zach') identity.append(element('span', 'GK', 'keeper-tag'));
   return identity;
 }
 
@@ -178,7 +174,9 @@ function renderHistory(container, records, editable = false) {
     const top = element('div', undefined, 'match-card-top');
     const title = element('div');
     const actions = element('div', undefined, 'match-card-actions');
-    title.append(element('h3', `Gameweek ${match.week}`), element('p', scoreLine(match), 'match-score'));
+    const score = element('p', undefined, 'match-score');
+    score.append('Expected Toulouse ', element('strong', `${match.team}–${match.opponent}`), ` ${match.opponentName}`);
+    title.append(element('h3', `Gameweek ${match.week}`), score);
     top.append(title);
     if (editable) {
       const edit = element('button', 'Edit', 'secondary');
@@ -213,6 +211,15 @@ function renderHistory(container, records, editable = false) {
   container.replaceChildren(cards);
 }
 
+function renderLeader(stats, metric, id, unit) {
+  const best = Math.max(...Array.from(stats.values(), player => player[metric]));
+  const leaders = best > 0 ? players.filter(player => stats.get(player)[metric] === best) : [];
+  document.querySelector(`#${id}`).textContent = leaders.length ? leaders.join(' / ') : `No ${metric} yet`;
+  document.querySelector(`#${id}-count`).textContent = leaders.length
+    ? `${best} ${unit}${best === 1 ? '' : 's'}${leaders.length > 1 ? ' each' : ''}`
+    : '';
+}
+
 function render() {
   const stats = new Map(players.map(player => [player, { goals: 0, assists: 0 }]));
   const keeperMatches = [];
@@ -227,6 +234,8 @@ function render() {
   }
   document.querySelector('#team-goals').textContent = goals;
   document.querySelector('#team-clean-sheets').textContent = keeperMatches.length;
+  renderLeader(stats, 'goals', 'top-scorer', 'goal');
+  renderLeader(stats, 'assists', 'top-assister', 'assist');
   document.querySelector('#keeper-counter').textContent = keeperMatches.length;
   const list = document.querySelector('#keeper-matches');
   list.replaceChildren(...keeperMatches.map(match => element('li', `Gameweek ${match.week} · ${scoreLine(match)}`)));

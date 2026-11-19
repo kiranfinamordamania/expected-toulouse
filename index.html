@@ -3,29 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#281344">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
+  <meta name="theme-color" content="#422073">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
   <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
   <title>Expected Toulouse · Match Stats</title>
-  <link rel="stylesheet" href="./styles.css?v=delete-1">
-  <script src="./stats.js?v=delete-1" defer></script>
+  <link rel="icon" href="./expected-toulouse-crest.png" type="image/png">
+  <link rel="stylesheet" href="./styles.css?v=club-1">
+  <script src="./stats.js?v=club-1" defer></script>
 </head>
 <body>
-  <header class="hero">
-    <div class="hero-inner wrap">
-      <div class="crest" aria-hidden="true">ET</div>
-      <div class="hero-copy">
-        <p class="eyebrow">Five-a-side football</p>
+  <header class="masthead">
+    <div class="masthead-inner wrap">
+      <img class="crest" src="./expected-toulouse-crest.png" alt="" width="320" height="320">
+      <div>
         <h1>Expected Toulouse</h1>
+        <p class="masthead-subtitle">Five-a-side match stats</p>
       </div>
-      <div class="pitch" aria-hidden="true"><div class="pitch-circle"></div></div>
     </div>
   </header>
 
   <main class="wrap">
-    <section class="totals" aria-label="Team totals">
-      <div class="total-card"><p>Team goals</p><strong id="team-goals">0</strong></div>
-      <div class="total-card"><p>Clean sheets</p><strong id="team-clean-sheets">0</strong></div>
+    <section class="season-overview" aria-label="Team totals and leaders">
+      <dl class="stats-strip">
+        <div class="stat"><dt>Team goals</dt><dd id="team-goals">0</dd></div>
+        <div class="stat"><dt>Clean sheets</dt><dd id="team-clean-sheets">0</dd></div>
+        <div class="leader"><dt>Top scorer</dt><dd><strong id="top-scorer">No goals yet</strong><span id="top-scorer-count"></span></dd></div>
+        <div class="leader"><dt>Top assister</dt><dd><strong id="top-assister">No assists yet</strong><span id="top-assister-count"></span></dd></div>
+      </dl>
     </section>
 
     <section class="board" aria-label="Player statistics">
@@ -96,10 +100,7 @@
           <p>Goalkeeper</p>
         </div>
         <div class="keeper-row">
-          <div class="player">
-            <span class="initials is-keeper" aria-hidden="true">Z</span>
-            <div>Zach <span class="keeper-tag">GK</span></div>
-          </div>
+          <div class="player">Zach <span class="keeper-tag">GK</span></div>
           <strong id="keeper-counter">0</strong>
         </div>
         <p class="keeper-note">Zach earns a clean sheet each time Expected Toulouse wins without conceding.</p>

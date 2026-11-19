@@ -8,7 +8,7 @@
   <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
   <title>Expected Toulouse · Match Stats</title>
   <link rel="icon" href="./expected-toulouse-crest.png" type="image/png">
-  <link rel="stylesheet" href="./styles.css?v=club-1">
+  <link rel="stylesheet" href="./styles.css?v=injuries-1">
   <script src="./stats.js?v=club-1" defer></script>
 </head>
 <body>
@@ -33,11 +33,14 @@
     </section>
 
     <section class="board" aria-label="Player statistics">
-      <div class="tab-bar" role="tablist" aria-label="Stats views">
-        <button type="button" id="log-tab" role="tab" aria-selected="true" aria-controls="log-panel">Gameweeks</button>
-        <button type="button" id="squad-tab" role="tab" aria-selected="false" aria-controls="squad-panel" tabindex="-1">Squad Stats</button>
-        <button type="button" id="keeper-tab" role="tab" aria-selected="false" aria-controls="keeper-panel" tabindex="-1">Clean Sheets</button>
-      </div>
+      <nav class="section-nav" aria-label="Team pages">
+        <div class="tab-bar" role="tablist" aria-label="Stats views">
+          <button type="button" id="log-tab" role="tab" aria-selected="true" aria-controls="log-panel">Gameweeks</button>
+          <button type="button" id="squad-tab" role="tab" aria-selected="false" aria-controls="squad-panel" tabindex="-1">Squad Stats</button>
+          <button type="button" id="keeper-tab" role="tab" aria-selected="false" aria-controls="keeper-panel" tabindex="-1">Clean Sheets</button>
+        </div>
+        <a href="./injuries.html">Injuries</a>
+      </nav>
 
       <section id="log-panel" role="tabpanel" aria-labelledby="log-tab">
         <div class="match-entry">

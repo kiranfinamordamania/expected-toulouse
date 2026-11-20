@@ -627,7 +627,6 @@ function render() {
   }
   squadStats = stats;
   document.querySelector('#team-goals').textContent = goals;
-  document.querySelector('#team-clean-sheets').textContent = keeper.cleanSheets;
   renderLeader(stats, 'goals', 'top-scorer', 'goal');
   renderLeader(stats, 'assists', 'top-assister', 'assist');
   renderSquad(stats);

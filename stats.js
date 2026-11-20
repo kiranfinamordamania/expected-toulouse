@@ -38,6 +38,8 @@ const playerProfiles = {
   'Ben 2': {
     number: 8,
     position: 'Midfielder',
+    photo: './photos/ben-2.webp',
+    photoCrop: [78, 46.4, 230],
     bio: 'Classy footballer. Cool, calm and collected.',
     similarPlayer: 'Michael Carrick'
   },

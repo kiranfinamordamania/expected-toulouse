@@ -556,8 +556,8 @@ main.wrap { padding-top: 1.35rem; }
 .remove-match:hover { background: #521b1d; }
 thead { background: #352344; }
 .squad-forever { background: #352145; border-color: #9c79b3; }
-.squad-forever .profile-link { color: var(--gold); }
-.squad-forever .profile-link:hover { color: #ffe5ac; }
+#squad-panel .profile-link { color: var(--gold); }
+#squad-panel .profile-link:hover { color: #ffe5ac; }
 #editor-dialog, #delete-dialog, #profile-dialog { border-radius: .25rem; }
 .save-note { padding-block: .85rem; }
 

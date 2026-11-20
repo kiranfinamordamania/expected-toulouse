@@ -570,20 +570,6 @@ function renderHistory(container, records, editable = false) {
     actions.append(remove);
     top.append(actions);
     card.append(top, matchContributions(match.goals));
-
-    if (match.goals.length) {
-      const details = element('details');
-      details.append(element('summary', 'Goal by goal'));
-      const goals = element('ol');
-      for (const { scorer, assist } of match.goals) {
-        const name = scorer === uncredited ? 'Uncredited goal' : scorer;
-        const item = element('li', name);
-        if (assist) item.append(element('span', `Assisted by ${assist}`));
-        goals.append(item);
-      }
-      details.append(goals);
-      card.append(details);
-    }
     cards.append(card);
   }
   container.replaceChildren(cards);

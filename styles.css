@@ -274,12 +274,8 @@ select:disabled { color: var(--muted); background: var(--wash); }
   color: var(--dark-violet);
   font: 700 1.25rem/1 var(--display);
 }
-.match-card details { margin-top: .55rem; }
-.match-card summary, #local-history > summary { color: var(--violet); font-size: .875rem; font-weight: 700; cursor: pointer; }
+#local-history > summary { color: var(--violet); font-size: .875rem; font-weight: 700; cursor: pointer; }
 #local-history { margin-top: 1rem; }
-.match-card ol { margin: .5rem 0 .1rem; padding-left: 1.45rem; }
-.match-card li + li { margin-top: .35rem; }
-.match-card li span { margin-left: .55rem; color: var(--muted); font-size: .875rem; }
 
 table { width: 100%; table-layout: fixed; border-collapse: collapse; }
 thead { background: var(--wash); }
@@ -527,7 +523,6 @@ main.wrap { padding-top: 1.35rem; }
 .match-contributions dd { margin-top: .27rem; font-size: .9rem; line-height: 1.4; }
 .match-contributions ul { list-style: none; padding: 0; margin: 0; }
 .match-contributions li { display: inline-block; margin-inline-end: .7rem; }
-.match-card .match-contributions li + li { margin-top: 0; }
 .match-card .match-contributions-empty { color: var(--muted); }
 .result-summary { display: flex; align-items: center; gap: .85rem; flex: 1 1 13rem; }
 .result-summary > div { min-width: 0; }
@@ -552,7 +547,6 @@ main.wrap { padding-top: 1.35rem; }
   overflow-wrap: anywhere;
   font: 700 1.55rem/1.1 var(--display);
 }
-.match-card details { grid-column: 1 / -1; margin: .5rem 0 0 5.2rem; }
 .match-card-actions { margin-inline-start: auto; }
 .match-card-actions button { min-height: 2.25rem; padding-inline: .58rem; font-size: .8rem; }
 .primary, .secondary, .danger, input, select, textarea { border-radius: .125rem; }
@@ -578,7 +572,6 @@ thead { background: #352344; }
 @media (max-width: 49rem) {
   .match-card { grid-template-columns: minmax(0, 1fr); row-gap: .65rem; }
   .match-contributions { border: 0; padding-inline-start: 5.2rem; }
-  .match-card details { margin-top: 0; }
 }
 @media (max-width: 42rem) {
   main.wrap { padding-top: 1rem; }
@@ -594,5 +587,4 @@ thead { background: #352344; }
   .result-summary { gap: .56rem; flex-basis: 12rem; }
   .result-opponent { font-size: 1.4rem; }
   .match-contributions { padding-inline-start: 3.96rem; gap: .5rem .8rem; }
-  .match-card details { margin-inline-start: 3.96rem; }
 }

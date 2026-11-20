@@ -17,7 +17,7 @@
   --muted: #d6c6e6;
   --line: #ab83cf55;
   --wash: #42255b;
-  --danger: #ffb5c8;
+  --danger: #ff6258;
   --gold: #ffe3a7;
   --ink: #28133f;
 }
@@ -222,10 +222,10 @@ select:disabled { color: var(--muted); background: var(--wash); }
 .primary:hover { background: #fff2ff; }
 .secondary { color: #f4e2ff; background: #492865; border-color: #ab83cf80; }
 .secondary:hover { background: #61407d; }
-.remove-match { color: var(--danger); background: #49243f; border-color: #b86e9a; }
-.remove-match:hover { background: #653052; }
-.danger { color: #3e1026; background: var(--danger); border-color: var(--danger); }
-.danger:hover { background: #ffcadd; }
+.remove-match { color: var(--danger); background: #41191b; border-color: #e24d43; }
+.remove-match:hover { background: #521b1d; }
+.danger { color: #290c0d; background: var(--danger); border-color: var(--danger); }
+.danger:hover { background: #ff786c; }
 .form-actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .9rem; }
 .match-comments { margin-top: .85rem; padding: .7rem; border: 1px solid var(--line); }
 .match-comments summary { color: var(--violet); font-weight: 700; cursor: pointer; }
@@ -308,7 +308,7 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 #injury-form h3 { margin-bottom: .35rem; color: var(--dark-violet); }
 .injury-fields { min-width: 0; padding: 0; border: 0; }
 .injury-type-field { grid-column: 1 / -1; }
-.injury-cross { color: #ff8caa; font-size: .875rem; }
+.injury-cross { color: #ff4f44; font-size: .875rem; }
 .player-injury-note { display: block; margin-top: .25rem; color: var(--danger); font-size: .75rem; font-weight: 400; line-height: 1.25; }
 .player { display: flex; align-items: center; gap: .45rem; line-height: 1.2; }
 .profile-link { border: 0; padding: .1rem 0; background: transparent; color: var(--violet); font-weight: 700; text-align: left; text-decoration: underline; text-underline-offset: .17em; }

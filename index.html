@@ -3,22 +3,37 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#422073">
+  <meta name="theme-color" content="#21103b">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
   <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
   <title>Expected Toulouse · Match Stats</title>
   <link rel="icon" href="./expected-toulouse-crest.png" type="image/png">
-  <link rel="stylesheet" href="./styles.css?v=injury-editor-1">
+  <link rel="stylesheet" href="./styles.css?v=purple-1">
   <script src="./stats.js?v=ben-2-photo-1" defer></script>
 </head>
 <body>
   <header class="masthead">
     <div class="masthead-inner wrap">
-      <img class="crest" src="./expected-toulouse-crest.png" alt="" width="320" height="320">
-      <div>
+      <div class="club-heading">
+        <img class="crest" src="./expected-toulouse-crest.png" alt="" width="320" height="320">
         <h1>Expected Toulouse</h1>
-        <p class="masthead-subtitle">Five-a-side match stats</p>
       </div>
+      <section class="league-update" aria-label="Exeter Fives league update">
+        <div>
+          <h2>League position</h2>
+          <p class="league-highlight">1st in Division 3</p>
+          <p>Term 1 · 12 points from 5 matches</p>
+          <a href="https://www.exeterfives.online/" target="_blank" rel="noopener noreferrer">League standings</a>
+        </div>
+        <div>
+          <h2 id="league-fixture-heading">Next match</h2>
+          <p class="league-highlight">vs MBFC</p>
+          <p><time id="league-fixture-kickoff" datetime="2026-11-22T12:00:00Z">Sunday 22 November · 12:00 GMT</time></p>
+          <p>Week 6 · Sandiago Bernabeu</p>
+          <a href="https://www.exeterfives.online/matches" target="_blank" rel="noopener noreferrer">Match fixtures</a>
+        </div>
+        <p class="league-checked">Checked <time datetime="2026-11-19">19 November 2026</time></p>
+      </section>
     </div>
   </header>
 
@@ -38,23 +53,6 @@
         <div class="leader"><dt>Top scorer</dt><dd><strong id="top-scorer">No goals yet</strong><span id="top-scorer-count"></span></dd></div>
         <div class="leader"><dt>Top assister</dt><dd><strong id="top-assister">No assists yet</strong><span id="top-assister-count"></span></dd></div>
       </dl>
-    </section>
-
-    <section class="league-update" aria-label="Exeter Fives league update">
-      <div>
-        <h2>League position</h2>
-        <p class="league-highlight">1st in Division 3</p>
-        <p>Term 1 · 12 points from 5 matches</p>
-        <a href="https://www.exeterfives.online/" target="_blank" rel="noopener noreferrer">Exeter Fives standings</a>
-      </div>
-      <div>
-        <h2 id="league-fixture-heading">Next match</h2>
-        <p class="league-highlight">vs MBFC</p>
-        <p><time id="league-fixture-kickoff" datetime="2026-11-22T12:00:00Z">Sunday 22 November · 12:00 GMT</time></p>
-        <p>Week 6 · Sandiago Bernabeu</p>
-        <a href="https://www.exeterfives.online/matches" target="_blank" rel="noopener noreferrer">Exeter Fives fixtures</a>
-      </div>
-      <p class="league-checked">Checked <time datetime="2026-11-19">19 November 2026</time></p>
     </section>
 
     <section class="board" aria-label="Player statistics">

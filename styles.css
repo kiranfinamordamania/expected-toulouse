@@ -7,70 +7,74 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  color: #211a29;
-  background: #fff;
+  color: #faf2ff;
+  background: #190b2c;
   --display: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
-  --violet: #422073;
-  --dark-violet: #301452;
-  --muted: #61596b;
-  --line: #d9d3df;
-  --wash: #f5f2f8;
-  --danger: #8a254b;
+  --violet: #eccfff;
+  --dark-violet: #fff6ff;
+  --muted: #d6c6e6;
+  --line: #ab83cf55;
+  --wash: #42255b;
+  --danger: #ffb5c8;
+  --gold: #ffe3a7;
+  --ink: #28133f;
 }
 
 * { box-sizing: border-box; }
 body, h1, h2, h3, p, dl, dd { margin: 0; }
-button, input, select { font: inherit; }
+body { min-height: 100vh; isolation: isolate; }
+body::before {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 128% 80% at 106% -11%, transparent 68%, #bc89f43d 68.2%, transparent 68.6%),
+    radial-gradient(ellipse 128% 80% at 106% -11%, #5f2d8269 0%, #653e8c73 64%, #9868c467 71%, transparent 81%),
+    radial-gradient(ellipse 142% 98% at -36% 125%, transparent 65%, #9d68cd4f 65.3%, transparent 65.7%),
+    radial-gradient(ellipse 142% 98% at -36% 125%, #532874 0%, #462361 62%, #75469b88 69%, transparent 78%),
+    linear-gradient(122deg, #211035, #32134c 57%, #190c2a);
+}
+button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { opacity: .65; cursor: wait; }
-:focus-visible { outline: 2px solid #7946b0; outline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 [hidden] { display: none !important; }
 
-.wrap { width: min(calc(100% - 4rem), 70rem); margin-inline: auto; }
+.wrap { width: min(calc(100% - 4rem), 72rem); margin-inline: auto; }
 
 .masthead {
-  background: var(--violet);
-  color: white;
-  overflow: hidden;
+  background: #21103bf5;
+  border-bottom: 1px solid #a178c95c;
+  box-shadow: 0 .7rem 2rem #10071d55;
+  backdrop-filter: blur(18px);
 }
 .masthead-inner {
-  position: relative;
-  isolation: isolate;
-  min-height: 11.25rem;
-  display: flex;
+  min-height: 8.65rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   align-items: center;
-  gap: clamp(1rem, 3vw, 2rem);
-  padding-block: 1.35rem 1.5rem;
+  gap: clamp(1rem, 3vw, 2.65rem);
+  padding-block: .95rem;
 }
-.masthead-inner::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: -25%;
-  right: 1.5rem;
-  width: 2.4rem;
-  height: 150%;
-  background: #ffffff14;
-  box-shadow: -3.1rem 0 #ffffff14, -6.2rem 0 #ffffff14;
-  transform: skewX(-20deg);
-}
+.club-heading { display: flex; min-width: 0; align-items: center; gap: clamp(.6rem, 2vw, 1.2rem); }
 .crest {
   display: block;
-  width: clamp(4rem, 11vw, 7.7rem);
+  width: clamp(3.6rem, 6.1vw, 5.35rem);
   height: auto;
   aspect-ratio: 1;
   object-fit: contain;
   flex: none;
 }
 .masthead h1 {
-  font: 700 clamp(2.4rem, 7vw, 5.4rem)/.92 var(--display);
+  font: 700 clamp(2.35rem, 4.25vw, 4.2rem)/.93 var(--display);
   text-transform: uppercase;
-  letter-spacing: -.015em;
+  letter-spacing: -.012em;
   text-wrap: balance;
 }
-.masthead-subtitle { margin-top: .55rem; font-size: .95rem; color: #f1e8fa; }
 
 .season-overview { border-bottom: 1px solid var(--line); }
 .season-filter { display: flex; align-items: center; gap: .75rem; padding-top: .85rem; color: var(--violet); font-weight: 700; }
@@ -104,20 +108,39 @@ button:disabled { opacity: .65; cursor: wait; }
 
 .league-update {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: .65rem clamp(.85rem, 4vw, 2rem);
-  padding: .95rem 0;
-  border-bottom: 1px solid var(--line);
+  grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr);
+  gap: .3rem .7rem;
   color: var(--muted);
-  font-size: .875rem;
-  line-height: 1.4;
+  font-size: .8rem;
+  line-height: 1.36;
 }
-.league-update h2 { font: inherit; font-weight: 700; color: var(--muted); }
-.league-highlight { color: var(--violet); font: 700 clamp(1.35rem, 3vw, 1.75rem)/1.1 var(--display); margin: .2rem 0; }
-.league-update a { display: inline-block; margin-top: .25rem; color: var(--violet); }
-.league-checked { grid-column: 1 / -1; font-size: .8rem; }
+.league-update > div {
+  min-width: 0;
+  padding: .52rem .68rem;
+  border: 1px solid var(--line);
+  border-radius: .55rem;
+  background: #56327561;
+  overflow-wrap: anywhere;
+}
+.league-update h2 { font: inherit; font-weight: 700; color: var(--violet); }
+.league-highlight { color: var(--gold); font: 700 clamp(1.45rem, 2.4vw, 1.85rem)/1.04 var(--display); margin: .15rem 0 .22rem; }
+.league-update a { display: inline-block; margin-top: .21rem; color: var(--violet); text-underline-offset: .16em; }
+.league-update time { color: #faf2ff; }
+.league-checked { grid-column: 1 / -1; justify-self: end; font-size: .72rem; }
+.league-checked time { color: inherit; }
 
-main.wrap { padding-bottom: 2.8rem; }
+main.wrap { padding-block: 1.5rem 2.8rem; }
+.season-overview { border: 1px solid var(--line); border-radius: .8rem; background: #2b153fbb; padding-inline: clamp(.7rem, 2vw, 1.25rem); }
+.season-filter { padding-top: .75rem; }
+.season-filter select { min-height: 2.3rem; }
+.stat dd, #keeper-counter, .leader strong { color: var(--gold); }
+.board {
+  margin-top: 1.05rem;
+  padding-inline: clamp(.7rem, 2vw, 1.25rem);
+  border: 1px solid var(--line);
+  border-radius: .8rem;
+  background: #261337d9;
+}
 .tab-bar {
   display: flex;
   flex-wrap: wrap;
@@ -179,30 +202,30 @@ input, select, textarea {
   width: 100%;
   min-height: 2.75rem;
   padding: .46rem .65rem;
-  border: 1px solid #bfb5c9;
-  border-radius: .15rem;
-  color: #211a29;
-  background: #fff;
+  border: 1px solid #aa81ca;
+  border-radius: .38rem;
+  color: #fff6ff;
+  background: #2d1743;
   font-size: 1rem;
 }
-input::placeholder { color: #746b7e; }
+input::placeholder, textarea::placeholder { color: #c9acd9; }
 select:disabled { color: var(--muted); background: var(--wash); }
 .primary, .secondary, .danger {
   min-height: 2.75rem;
   padding: .48rem .85rem;
   border: 1px solid var(--violet);
-  border-radius: .15rem;
+  border-radius: .4rem;
   font-size: .9rem;
   font-weight: 700;
 }
-.primary { background: var(--violet); color: #fff; }
-.primary:hover { background: var(--dark-violet); }
-.secondary { color: var(--violet); background: #fff; border-color: #c9bed3; }
-.secondary:hover { background: var(--wash); }
-.remove-match { color: var(--danger); border-color: #d9bdca; }
-.remove-match:hover { background: #fff0f5; }
-.danger { color: #fff; background: var(--danger); border-color: var(--danger); }
-.danger:hover { background: #691a37; }
+.primary { background: var(--violet); color: var(--ink); }
+.primary:hover { background: #fff2ff; }
+.secondary { color: #f4e2ff; background: #492865; border-color: #ab83cf80; }
+.secondary:hover { background: #61407d; }
+.remove-match { color: var(--danger); background: #49243f; border-color: #b86e9a; }
+.remove-match:hover { background: #653052; }
+.danger { color: #3e1026; background: var(--danger); border-color: var(--danger); }
+.danger:hover { background: #ffcadd; }
 .form-actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .9rem; }
 .match-comments { margin-top: .85rem; padding: .7rem; border: 1px solid var(--line); }
 .match-comments summary { color: var(--violet); font-weight: 700; cursor: pointer; }
@@ -283,7 +306,7 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 #injury-form h3 { margin-bottom: .35rem; color: var(--dark-violet); }
 .injury-fields { min-width: 0; padding: 0; border: 0; }
 .injury-type-field { grid-column: 1 / -1; }
-.injury-cross { color: #ae1c36; font-size: .875rem; }
+.injury-cross { color: #ff8caa; font-size: .875rem; }
 .player-injury-note { display: block; margin-top: .25rem; color: var(--danger); font-size: .75rem; font-weight: 400; line-height: 1.25; }
 .player { display: flex; align-items: center; gap: .45rem; line-height: 1.2; }
 .profile-link { border: 0; padding: .1rem 0; background: transparent; color: var(--violet); font-weight: 700; text-align: left; text-decoration: underline; text-underline-offset: .17em; }
@@ -308,10 +331,11 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
   width: min(calc(100% - 2rem), 29rem);
   padding: 1.3rem;
   border: 1px solid var(--violet);
-  border-radius: .15rem;
+  border-radius: .75rem;
   color: inherit;
+  background: #2d1643;
 }
-#editor-dialog::backdrop, #delete-dialog::backdrop, #profile-dialog::backdrop { background: #1e142db3; }
+#editor-dialog::backdrop, #delete-dialog::backdrop, #profile-dialog::backdrop { background: #12081dd6; }
 #editor-form p, #editor-form label, #delete-dialog p { margin-top: .75rem; line-height: 1.45; }
 #editor-form a { color: var(--violet); font-weight: 700; }
 .profile-heading { display: flex; gap: .75rem; align-items: center; }
@@ -357,6 +381,13 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 #profile-comparison dt { color: var(--muted); font-size: .875rem; }
 #profile-comparison dd { margin-top: .15rem; font-weight: 700; }
 
+@media (max-width: 54rem) {
+  .masthead-inner { grid-template-columns: minmax(0, 1fr); gap: .6rem; padding-block: .7rem; }
+  .masthead h1 { font-size: clamp(2.2rem, 6vw, 3.25rem); }
+  .crest { width: 3.45rem; }
+  .league-checked { display: none; }
+}
+
 @media (max-width: 52rem) {
   #log-panel { grid-template-columns: 1fr; }
   .match-entry, .match-log { padding-inline: 0; }
@@ -368,9 +399,13 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
   .squad-table th, .squad-table td { font-size: .8rem; padding-inline: .25rem; }
   .injuries-table th, .injuries-table td { font-size: .8rem; padding-inline: .3rem; }
   .injuries-table .secondary { padding-inline: .3rem; font-size: .75rem; }
-  .masthead-inner { min-height: 7.5rem; }
-  .masthead-inner::after { right: -.75rem; }
-  .masthead-subtitle { font-size: .875rem; }
+  .masthead-inner { min-height: 0; }
+  .league-update { font-size: .75rem; gap: .45rem; }
+  .league-update > div { padding: .43rem .5rem; }
+  .league-highlight { font-size: 1.38rem; }
+  main.wrap { padding-top: 1rem; }
+  .tab-bar { gap: 0 clamp(.5rem, 3vw, .9rem); }
+  [role="tab"] { min-height: 2.85rem; font-size: .82rem; }
   .stats-strip { grid-template-columns: 1fr 1fr; padding-block: .7rem 0; }
   .stats-strip > div { padding: 0 .65rem .7rem; }
   .stats-strip > div:nth-child(odd) { padding-inline-start: 0; border-inline-start: 0; }

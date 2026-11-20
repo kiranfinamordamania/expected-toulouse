@@ -163,12 +163,14 @@ main.wrap { padding-block: 1.5rem 2.8rem; }
 [role="tab"]:hover { color: var(--violet); }
 [role="tab"][aria-selected="true"] { color: var(--violet); border-bottom-color: var(--violet); }
 
-#log-panel { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); }
-.match-entry { padding: 1.5rem clamp(1.25rem, 3.5vw, 2.5rem) 1.7rem 0; }
+.match-entry {
+  padding: 1.25rem 0 1.65rem;
+  border-top: 1px solid var(--line);
+}
+#entry-forms { max-width: 36rem; }
 .match-log {
   min-width: 0;
-  padding: 1.5rem 0 1.7rem clamp(1.25rem, 3.5vw, 2.5rem);
-  border-inline-start: 1px solid var(--line);
+  padding: 1.25rem 0 1.65rem;
 }
 .board-heading, .match-log-heading {
   display: flex;
@@ -188,7 +190,7 @@ h2 { font: 700 2rem/1 var(--display); color: var(--dark-violet); }
   gap: .85rem;
   margin-block: .95rem 1rem;
 }
-.score-fields label, .goal-row label, #editor-form label {
+.score-fields label, .goal-row label {
   display: grid;
   align-content: end;
   gap: .35rem;
@@ -288,18 +290,18 @@ tbody tr { border-bottom: 1px solid var(--line); }
 tbody tr:last-child { border-bottom: 0; }
 tbody th { text-align: left; padding: .72rem .75rem; }
 td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.squad-table thead th:first-child { width: 20%; }
-.squad-table thead th:nth-child(2) { width: 24%; }
-.squad-table thead th:nth-child(3) { width: 13%; }
-.squad-table thead th:nth-child(4) { width: 12%; }
-.squad-table thead th:nth-child(5) { width: 13%; }
+.squad-table thead th:first-child { width: 26%; }
+.squad-table thead th:nth-child(2) { width: 22%; }
+.squad-table thead th:nth-child(3) { width: 15%; }
+.squad-table thead th:nth-child(4) { width: 11%; }
+.squad-table thead th:nth-child(5) { width: 12%; }
 .squad-table tbody td:nth-child(2) { font-weight: 400; }
 .squad-table tbody td:last-child { color: var(--gold); }
+.appearances-short { display: none; }
 .squad-forever { margin: 1.2rem 0; border: 1px solid var(--line); background: var(--wash); }
 .squad-forever h3 { padding: .55rem .85rem; border-bottom: 1px solid var(--line); color: var(--dark-violet); font: 700 1.35rem/1.2 var(--display); }
-.forever-player { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .75rem .85rem; }
-.forever-player span { display: block; margin-top: .15rem; color: var(--muted); font-size: .875rem; }
-.forever-number { color: var(--violet); font-weight: 700; white-space: nowrap; }
+.forever-player { padding: .75rem .85rem; }
+.forever-position { margin-top: .15rem; color: var(--muted); font-size: .875rem; }
 .injuries-table th, .injuries-table td { text-align: left; padding-inline: .75rem; }
 .injuries-table thead th:first-child { width: 24%; }
 .injuries-table td { font-weight: 400; overflow-wrap: anywhere; }
@@ -310,7 +312,8 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 .injury-type-field { grid-column: 1 / -1; }
 .injury-cross { color: #ff4f44; font-size: .875rem; }
 .player-injury-note { display: block; margin-top: .25rem; color: var(--danger); font-size: .75rem; font-weight: 400; line-height: 1.25; }
-.player { display: flex; align-items: center; gap: .45rem; line-height: 1.2; }
+.player { display: flex; flex-wrap: wrap; align-items: center; gap: .12rem .42rem; line-height: 1.2; }
+.squad-number { color: var(--muted); font-size: .85em; font-weight: 600; white-space: nowrap; }
 .profile-link { border: 0; padding: .1rem 0; background: transparent; color: var(--violet); font-weight: 700; text-align: left; text-decoration: underline; text-underline-offset: .17em; }
 .profile-link:hover { color: var(--dark-violet); }
 .save-note { padding: .75rem 0; border-top: 1px solid var(--line); color: var(--muted); font-size: .875rem; }
@@ -324,8 +327,8 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
   background: #2d1643;
 }
 #editor-dialog::backdrop, #delete-dialog::backdrop, #profile-dialog::backdrop { background: #12081dd6; }
-#editor-form p, #editor-form label, #delete-dialog p { margin-top: .75rem; line-height: 1.45; }
-#editor-form a { color: var(--violet); font-weight: 700; }
+#editor-form p, #delete-dialog p { margin-top: .75rem; line-height: 1.45; }
+#editor-token { margin-top: 1rem; }
 .profile-heading { display: flex; gap: .75rem; align-items: center; }
 .profile-name { flex: 1; }
 #profile-shirt-number { color: var(--muted); font-size: .875rem; margin-top: .25rem; }
@@ -376,16 +379,13 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
   .league-checked { display: none; }
 }
 
-@media (max-width: 52rem) {
-  #log-panel { grid-template-columns: 1fr; }
-  .match-entry, .match-log { padding-inline: 0; }
-  .match-log { border-inline-start: 0; border-top: 1px solid var(--line); }
-}
-
 @media (max-width: 42rem) {
   .wrap { width: calc(100% - 2rem); }
   .squad-table th, .squad-table td { font-size: .75rem; padding-inline: .2rem; overflow-wrap: anywhere; }
   .squad-table thead th:first-child { padding-left: .2rem; }
+  .squad-table .player { column-gap: .24rem; }
+  .appearances-full { display: none; }
+  .appearances-short { display: inline; }
   .injuries-table th, .injuries-table td { font-size: .8rem; padding-inline: .3rem; }
   .injuries-table .secondary { padding-inline: .3rem; font-size: .75rem; }
   .masthead-inner { min-height: 0; }
@@ -402,4 +402,197 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
   .stat dd { font-size: 2.2rem; }
   .leader strong { font-size: 1.55rem; }
   .match-entry, .match-log { padding-block: 1.1rem 1.3rem; }
+}
+
+/* Club programme layout */
+:root {
+  color: #faf5ff;
+  background: #38204b;
+  --violet: #e1c6fc;
+  --dark-violet: #faf5ff;
+  --muted: #c9b7d8;
+  --line: #6e557d;
+  --wash: #39254d;
+  --gold: #f2d18b;
+  --ink: #271336;
+}
+body::before {
+  background:
+    radial-gradient(ellipse 128% 80% at 106% -11%, transparent 68%, #c39ae355 68.2%, transparent 68.6%),
+    radial-gradient(ellipse 128% 80% at 106% -11%, #61348765 0%, #74529487 64%, #9868c483 71%, transparent 81%),
+    radial-gradient(ellipse 142% 98% at -36% 125%, transparent 65%, #ae7ed15c 65.3%, transparent 65.7%),
+    radial-gradient(ellipse 142% 98% at -36% 125%, #5c3777 0%, #533168 62%, #8056a097 69%, transparent 78%),
+    linear-gradient(122deg, #332045, #3d2552 57%, #2c1a3d);
+}
+.masthead {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #331a4b;
+  border-bottom: 3px solid #b38acb;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.masthead::before,
+.masthead::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -25%;
+  bottom: -25%;
+  width: 2rem;
+  transform: skewX(-21deg);
+  background: #50306c;
+  pointer-events: none;
+}
+.masthead::before { left: 54%; }
+.masthead::after { left: calc(54% + 2.4rem); width: .48rem; }
+.masthead-inner {
+  min-height: 13.75rem;
+  padding-block: 1.6rem;
+  grid-template-columns: minmax(0, 1.32fr) minmax(0, 1fr);
+  gap: clamp(1.25rem, 6vw, 5.5rem);
+}
+.club-heading { gap: clamp(.65rem, 2.3vw, 1.65rem); }
+.crest { width: clamp(3.65rem, 8vw, 7rem); }
+.masthead h1 {
+  font-size: clamp(3.4rem, 6.25vw, 6.2rem);
+  line-height: .84;
+  letter-spacing: -.025em;
+  text-wrap: nowrap;
+}
+.league-update {
+  align-self: stretch;
+  align-content: center;
+  gap: .65rem 1.1rem;
+  font-size: .875rem;
+  background: #331a4b;
+}
+.league-update > div {
+  padding: .65rem .75rem .65rem 0;
+  border: 0;
+  border-block: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+.league-update h2 { font-size: .79rem; color: var(--muted); }
+.league-highlight {
+  margin: .23rem 0 .28rem;
+  font-size: clamp(1.55rem, 2.7vw, 2.35rem);
+  color: #faf5ff;
+}
+#league-position.is-first { color: var(--gold); }
+.league-checked { justify-self: start; }
+main.wrap { padding-top: 1.35rem; }
+.season-overview {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+.season-filter { padding: 0; font-size: .9rem; color: inherit; }
+.stats-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); padding-block: 1.25rem 1.35rem; }
+.stats-strip dt { margin-bottom: .4rem; }
+.stat dd { color: inherit; font-size: 3.1rem; }
+.leader strong { color: inherit; font-size: 2.06rem; }
+.board {
+  margin-top: .66rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.tab-bar { gap: 0 clamp(.9rem, 4vw, 2.15rem); }
+[role="tab"] { min-height: 3.2rem; }
+[role="tab"][aria-selected="true"] { color: #faf5ff; border-bottom-color: #c88cec; }
+.match-log-heading { margin-bottom: .3rem; }
+#toggle-history { margin-top: 1.1rem; }
+.match-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.13fr) minmax(0, 1fr);
+  align-items: start;
+  column-gap: clamp(1.15rem, 3vw, 2.3rem);
+  padding-block: .95rem;
+}
+.match-contributions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem 1.3rem;
+  min-width: 0;
+  padding-inline-start: clamp(.75rem, 2.35vw, 1.6rem);
+  border-inline-start: 1px solid var(--line);
+}
+.match-contributions dt { color: var(--muted); font-size: .78rem; font-weight: 700; }
+.match-contributions dd { margin-top: .27rem; font-size: .9rem; line-height: 1.4; }
+.match-contributions ul { list-style: none; padding: 0; margin: 0; }
+.match-contributions li { display: inline-block; margin-inline-end: .7rem; }
+.match-card .match-contributions li + li { margin-top: 0; }
+.match-card .match-contributions-empty { color: var(--muted); }
+.result-summary { display: flex; align-items: center; gap: .85rem; flex: 1 1 13rem; }
+.result-summary > div { min-width: 0; }
+.match-card .result-summary h3 {
+  margin: 0 0 .13rem;
+  color: var(--muted);
+  font: 600 .78rem/1.35 "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.result-score {
+  min-width: 4.35rem;
+  text-align: center;
+  border-inline-end: 1px solid var(--line);
+  padding-inline-end: .85rem;
+  font: 700 2.65rem/1 var(--display);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.result-score[data-outcome="win"] { color: #88e7ae; }
+.result-score[data-outcome="draw"] { color: #ffe18a; }
+.result-score[data-outcome="loss"] { color: #ff8b70; }
+.result-opponent {
+  overflow-wrap: anywhere;
+  font: 700 1.55rem/1.1 var(--display);
+}
+.match-card details { grid-column: 1 / -1; margin: .5rem 0 0 5.2rem; }
+.match-card-actions { margin-inline-start: auto; }
+.match-card-actions button { min-height: 2.25rem; padding-inline: .58rem; font-size: .8rem; }
+.primary, .secondary, .danger, input, select, textarea { border-radius: .125rem; }
+.secondary { background: transparent; border-color: var(--line); }
+.secondary:hover { background: var(--wash); }
+.remove-match { color: var(--danger); border-color: #ad554d; background: #41191b; }
+.remove-match:hover { background: #521b1d; }
+thead { background: #352344; }
+.squad-forever { background: #352145; border-color: #9c79b3; }
+.squad-forever .profile-link { color: var(--gold); }
+.squad-forever .profile-link:hover { color: #ffe5ac; }
+#editor-dialog, #delete-dialog, #profile-dialog { border-radius: .25rem; }
+.save-note { padding-block: .85rem; }
+
+@media (max-width: 54rem) {
+  .masthead-inner { min-height: 0; grid-template-columns: minmax(0, 1fr); gap: 1rem; padding-block: 1.05rem 1.15rem; }
+  .masthead h1 { font-size: clamp(2.8rem, 6.4vw, 4.55rem); }
+  .masthead h1 br { display: none; }
+  .crest { width: clamp(3.15rem, 10vw, 4.35rem); }
+  .league-update { background: transparent; }
+  .league-update > div { border-bottom: 0; padding-block: .55rem 0; }
+}
+@media (max-width: 49rem) {
+  .match-card { grid-template-columns: minmax(0, 1fr); row-gap: .65rem; }
+  .match-contributions { border: 0; padding-inline-start: 5.2rem; }
+  .match-card details { margin-top: 0; }
+}
+@media (max-width: 42rem) {
+  main.wrap { padding-top: 1rem; }
+  .club-heading { gap: .62rem; }
+  .masthead h1 { font-size: clamp(1.98rem, 7.4vw, 3.52rem); }
+  .league-update { gap: .6rem .8rem; font-size: .78rem; }
+  .league-highlight { font-size: 1.48rem; }
+  .season-filter { padding-top: 0; }
+  .stats-strip { padding-block: .9rem .25rem; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .stat dd { font-size: 2.35rem; }
+  .leader strong { font-size: 1.67rem; }
+  .result-score { min-width: 3.4rem; padding-inline-end: .56rem; font-size: 2.3rem; }
+  .result-summary { gap: .56rem; flex-basis: 12rem; }
+  .result-opponent { font-size: 1.4rem; }
+  .match-contributions { padding-inline-start: 3.96rem; gap: .5rem .8rem; }
+  .match-card details { margin-inline-start: 3.96rem; }
 }

@@ -3,25 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#21103b">
+  <meta name="theme-color" content="#261338">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
   <meta name="description" content="Goals, assists and clean sheets for the Expected Toulouse five-a-side squad.">
   <title>Expected Toulouse · Match Stats</title>
   <link rel="icon" href="./expected-toulouse-crest.png" type="image/png">
-  <link rel="stylesheet" href="./styles.css?v=sharp-red-1">
-  <script src="./stats.js?v=squad-clean-sheets-1" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=club-1">
+  <script src="./stats.js?v=club-1" defer></script>
 </head>
 <body>
   <header class="masthead">
     <div class="masthead-inner wrap">
       <div class="club-heading">
         <img class="crest" src="./expected-toulouse-crest.png" alt="" width="320" height="320">
-        <h1>Expected Toulouse</h1>
+        <h1>Expected <br>Toulouse</h1>
       </div>
       <section class="league-update" aria-label="Exeter Fives league update">
         <div>
           <h2>League position</h2>
-          <p class="league-highlight">1st in Division 3</p>
+          <p class="league-highlight" id="league-position">1st in Division 3</p>
           <p>Term 1 · 12 points from 5 matches</p>
           <a href="https://www.exeterfives.online/" target="_blank" rel="noopener noreferrer">League standings</a>
         </div>
@@ -65,6 +65,22 @@
       </nav>
 
       <section id="log-panel" role="tabpanel" aria-labelledby="log-tab">
+        <div class="match-log">
+          <div class="match-log-heading">
+            <h2 id="history-heading" tabindex="-1">Match history</h2>
+            <button class="secondary" id="refresh-results" type="button">Refresh results</button>
+          </div>
+          <p class="match-feedback" id="history-feedback" role="status" hidden></p>
+          <p class="empty-log" id="empty-log">Loading shared results…</p>
+          <div id="week-log"></div>
+          <button class="secondary" id="toggle-history" type="button" aria-controls="week-log" aria-expanded="false" hidden>Show all results</button>
+          <details id="local-history" hidden>
+            <summary>Previous results on this browser</summary>
+            <p class="empty-log">These matches are stored on this device.</p>
+            <div id="local-results"></div>
+          </details>
+        </div>
+
         <div class="match-entry">
           <div id="entry-gate">
             <h2>Record a match</h2>
@@ -104,24 +120,9 @@
                 <button class="secondary" id="change-score" type="button">Change score</button>
               </div>
             </form>
-            <button class="secondary" id="forget-token" type="button">Forget token</button>
+            <button class="secondary" id="forget-token" type="button">Log out</button>
           </div>
           <p id="match-feedback" class="match-feedback" role="status" hidden></p>
-        </div>
-
-        <div class="match-log">
-          <div class="match-log-heading">
-            <h2 id="history-heading" tabindex="-1">Match history</h2>
-            <button class="secondary" id="refresh-results" type="button">Refresh results</button>
-          </div>
-          <p class="match-feedback" id="history-feedback" role="status" hidden></p>
-          <p class="empty-log" id="empty-log">Loading shared results…</p>
-          <div id="week-log"></div>
-          <details id="local-history" hidden>
-            <summary>Previous results on this browser</summary>
-            <p class="empty-log">These matches are stored on this device.</p>
-            <div id="local-results"></div>
-          </details>
         </div>
       </section>
 
@@ -136,7 +137,7 @@
               <tr>
                 <th scope="col">Player</th>
                 <th scope="col">Position</th>
-                <th scope="col">Squad No.</th>
+                <th scope="col" aria-label="Appearances"><span class="appearances-full">Appearances</span><span class="appearances-short" aria-hidden="true">Apps</span></th>
                 <th scope="col">Goals</th>
                 <th scope="col">Assists</th>
                 <th scope="col">Clean sheets</th>
@@ -147,8 +148,8 @@
           <section class="squad-forever" aria-labelledby="squad-forever-heading">
             <h3 id="squad-forever-heading">Forever</h3>
             <div class="forever-player">
-              <p><button class="profile-link" id="ben-forever-profile" type="button" aria-haspopup="dialog">Ben 1</button><span>Forward</span></p>
-              <p class="forever-number">No. 9</p>
+              <p class="player"><button class="profile-link" id="ben-forever-profile" type="button" aria-haspopup="dialog">Ben 1</button><span class="squad-number">#9</span></p>
+              <p class="forever-position">Forward</p>
             </div>
           </section>
         </div>
@@ -221,14 +222,11 @@
 
   <dialog id="editor-dialog" aria-labelledby="editor-title">
     <form id="editor-form">
-      <h2 id="editor-title">Connect GitHub to edit</h2>
-      <p>Create a fine-grained token on GitHub with access to <strong>only the expected-toulouse repository</strong> and <strong>Contents: Read and write</strong>.</p>
-      <p><a href="https://github.com/settings/personal-access-tokens/new?name=Expected+Toulouse+match+editor&amp;target_name=kiranfinamordamania&amp;expires_in=30&amp;contents=write" target="_blank" rel="noopener noreferrer">Create a GitHub editing token</a></p>
-      <label>GitHub editing token<input id="editor-token" type="password" pattern="github_pat_[A-Za-z0-9_]+" autocomplete="off" spellcheck="false" required></label>
-      <p>Your token is remembered in this browser. Use <strong>Forget token</strong> to remove it.</p>
+      <h2 id="editor-title">Enter password</h2>
+      <input id="editor-token" type="password" aria-label="Password" placeholder="Password" autocomplete="off" spellcheck="false" required autofocus>
       <p id="editor-feedback" role="status" hidden></p>
       <div class="form-actions">
-        <button class="primary" id="connect-editor" type="submit">Unlock editing</button>
+        <button class="primary" id="connect-editor" type="submit">Log in</button>
         <button class="secondary" id="cancel-editor" type="button">Cancel</button>
       </div>
     </form>

@@ -114,6 +114,7 @@ const matchComments = document.querySelector('#match-comments');
 const commentFields = document.querySelector('#comment-fields');
 const profileDialog = document.querySelector('#profile-dialog');
 const history = document.querySelector('#week-log');
+const historyToggle = document.querySelector('#toggle-history');
 const historyHeading = document.querySelector('#history-heading');
 const historyFeedback = document.querySelector('#history-feedback');
 const emptyLog = document.querySelector('#empty-log');
@@ -137,6 +138,7 @@ let openProfile;
 let commentsPlayer;
 let draft;
 let activeTerm;
+let historyExpanded = false;
 let editorToken = '';
 let editorAction;
 let connecting = false;
@@ -339,13 +341,14 @@ function showPlayerProfile(player) {
   profileDialog.showModal();
 }
 
-function playerLabel(player, injury) {
+function playerLabel(player, number, injury) {
   const identity = element('div', undefined, 'player');
   const profile = element('button', player, 'profile-link');
   profile.type = 'button';
   profile.setAttribute('aria-haspopup', 'dialog');
   profile.addEventListener('click', () => showPlayerProfile(player));
   identity.append(profile);
+  if (number != null) identity.append(element('span', `#${number}`, 'squad-number'));
   if (injury) {
     const cross = element('span', '✚', 'injury-cross');
     cross.setAttribute('aria-hidden', 'true');
@@ -488,14 +491,14 @@ function renderSquad(stats) {
     const row = element('tr');
     const heading = element('th');
     heading.scope = 'row';
+    const { position, number } = playerProfiles[player];
     const injury = injuries.find(record => record.player === player);
-    heading.append(playerLabel(player, injury));
+    heading.append(playerLabel(player, number, injury));
     if (injury) heading.append(element('span', `Expected back ${injuryReturnLabel(injury.returnDate)}`, 'player-injury-note'));
     row.append(heading);
-    const { position, number } = playerProfiles[player];
     row.insertCell().textContent = position ?? '—';
-    row.insertCell().textContent = number ?? '—';
-    const { goals, assists, cleanSheets } = stats.get(player);
+    const { played, goals, assists, cleanSheets } = stats.get(player);
+    row.insertCell().textContent = played;
     row.insertCell().textContent = goals;
     row.insertCell().textContent = assists;
     row.insertCell().textContent = cleanSheets ?? '';
@@ -508,6 +511,35 @@ function scoreLine(match) {
   return `Expected Toulouse ${match.team}–${match.opponent} ${match.opponentName}`;
 }
 
+function matchContributions(goals) {
+  const scorers = new Map();
+  const assisters = new Map();
+  for (const { scorer, assist } of goals) {
+    scorers.set(scorer, (scorers.get(scorer) ?? 0) + 1);
+    if (assist) assisters.set(assist, (assisters.get(assist) ?? 0) + 1);
+  }
+  const summary = element('dl', undefined, 'match-contributions');
+  for (const [label, counts, emptyText] of [['Goals', scorers, 'None'], ['Assists', assisters, 'None recorded']]) {
+    const group = element('div');
+    const value = element('dd');
+    const entries = [...counts].sort(([first, firstCount], [second, secondCount]) =>
+      secondCount - firstCount || first.localeCompare(second));
+    if (entries.length) {
+      const list = element('ul');
+      for (const [player, count] of entries) {
+        const name = player === uncredited ? 'Uncredited' : player;
+        list.append(element('li', `${name} ×${count}`));
+      }
+      value.append(list);
+    } else {
+      value.append(element('span', emptyText, 'match-contributions-empty'));
+    }
+    group.append(element('dt', label), value);
+    summary.append(group);
+  }
+  return summary;
+}
+
 function renderHistory(container, records, editable = false) {
   const cards = document.createDocumentFragment();
   for (const match of records) {
@@ -515,9 +547,14 @@ function renderHistory(container, records, editable = false) {
     const top = element('div', undefined, 'match-card-top');
     const title = element('div');
     const actions = element('div', undefined, 'match-card-actions');
-    const score = element('p', undefined, 'match-score');
-    score.append('Expected Toulouse ', element('strong', `${match.team}–${match.opponent}`), ` ${match.opponentName}`);
-    title.append(element('h3', matchTermLabel(match)), score);
+    title.className = 'result-summary';
+    const score = element('strong', `${match.team}–${match.opponent}`, 'result-score');
+    const outcome = match.team === match.opponent ? 'draw' : match.team > match.opponent ? 'win' : 'loss';
+    score.dataset.outcome = outcome;
+    score.setAttribute('aria-label', `${scoreLine(match)}, ${outcome}`);
+    const details = element('div');
+    details.append(element('h3', matchTermLabel(match)), element('p', `vs ${match.opponentName}`, 'result-opponent'));
+    title.append(score, details);
     top.append(title);
     if (editable) {
       const edit = element('button', 'Edit', 'secondary');
@@ -532,11 +569,11 @@ function renderHistory(container, records, editable = false) {
     remove.addEventListener('click', () => confirmDelete(match, !editable));
     actions.append(remove);
     top.append(actions);
-    card.append(top);
+    card.append(top, matchContributions(match.goals));
 
     if (match.goals.length) {
       const details = element('details');
-      details.append(element('summary', 'Goals and assists'));
+      details.append(element('summary', 'Goal by goal'));
       const goals = element('ol');
       for (const { scorer, assist } of match.goals) {
         const name = scorer === uncredited ? 'Uncredited goal' : scorer;
@@ -561,9 +598,25 @@ function renderLeader(stats, metric, id, unit) {
     : '';
 }
 
+function matchesForActiveTerm() {
+  return activeTerm ? matches.filter(match => matchTerm(match) === activeTerm) : matches;
+}
+
+function renderMatchHistory(records) {
+  renderHistory(history, historyExpanded ? records : records.slice(0, 3), true);
+  historyToggle.hidden = records.length <= 3;
+  historyToggle.setAttribute('aria-expanded', String(historyExpanded));
+  historyToggle.textContent = historyExpanded ? 'Show latest 3 results' : 'Show all results';
+}
+
+historyToggle.addEventListener('click', () => {
+  historyExpanded = !historyExpanded;
+  renderMatchHistory(matchesForActiveTerm());
+});
+
 function render() {
   termFilter.value = activeTerm ?? '';
-  const visibleMatches = activeTerm ? matches.filter(match => matchTerm(match) === activeTerm) : matches;
+  const visibleMatches = matchesForActiveTerm();
   const stats = emptySquadStats();
   const keeper = stats.get(goalkeeper);
   let goals = 0;
@@ -594,7 +647,7 @@ function render() {
   renderSquad(stats);
   if (profileDialog.open && openProfile) renderProfile(openProfile);
   if (commentsPlayer) renderManagerComments();
-  renderHistory(history, visibleMatches, true);
+  renderMatchHistory(visibleMatches);
   emptyLog.hidden = visibleMatches.length > 0 && !loadFailed;
   emptyLog.textContent = loadFailed ? 'Could not load the latest shared results. Try Refresh results.'
     : activeTerm ? `No matches recorded for ${termLabel(activeTerm)} yet.` : 'No matches recorded yet.';
@@ -750,6 +803,7 @@ weekInput.addEventListener('input', () => {
 
 termFilter.addEventListener('change', () => {
   activeTerm = termFilter.value ? Number(termFilter.value) : undefined;
+  historyExpanded = false;
   render();
   if (editorToken && !scoreForm.hidden && !draft?.baseline && !opponentNameInput.value && teamInput.value === '' && opponentInput.value === '') {
     loadMatch(nextMatch());
@@ -805,7 +859,7 @@ async function updateSharedHistory(match, baseline, replacement, report) {
   resultsVersion += 1;
   saveButton.disabled = true;
   forgetTokenButton.disabled = true;
-  report(replacement ? 'Saving to GitHub…' : 'Deleting from shared history…');
+  report(replacement ? 'Saving match…' : 'Deleting from shared history…');
   try {
     matches = await writeSharedMatch(match, baseline, replacement);
     loadFailed = false;
@@ -815,9 +869,9 @@ async function updateSharedHistory(match, baseline, replacement, report) {
       report('This match changed. Refresh results and check the latest score before trying again.');
     } else if (tokenRejected(error)) {
       forgetToken(token);
-      report(`GitHub did not allow this ${action === 'save' ? 'save' : 'deletion'}. Check that your token has Contents: Read and write for expected-toulouse, then try again.`);
+      report('This login does not have editing access. Log in again and try again.');
     } else {
-      report(`Could not ${action} the match on GitHub. Try again.`);
+      report(`Could not ${action} the match. Try again.`);
     }
     return false;
   } finally {
@@ -901,7 +955,7 @@ async function updateInjury(player, baseline, replacement) {
       setInjuryFeedback('This injury changed in another browser. Check the latest entry before trying again.');
     } else if (tokenRejected(error)) {
       forgetToken(token);
-      setInjuryFeedback('GitHub did not allow this change. Log in again with a token that has write access.');
+      setInjuryFeedback('This login does not have editing access. Log in again and try again.');
     } else {
       setInjuryFeedback('Could not update the injury. Try again.');
     }
@@ -941,10 +995,14 @@ function syncEntryAccess() {
   renderInjuries();
 }
 
+function validEditorToken(token) {
+  return /^github_pat_[A-Za-z0-9_]+$/.test(token ?? '');
+}
+
 function savedEditorToken() {
   try {
     const token = localStorage.getItem(editorTokenKey);
-    return /^github_pat_[A-Za-z0-9_]+$/.test(token ?? '') ? token : '';
+    return validEditorToken(token) ? token : '';
   } catch {
     return '';
   }
@@ -992,7 +1050,7 @@ unlockInjuries.addEventListener('click', () => withEditorAccess(() => injuryPlay
 forgetTokenButton.addEventListener('click', () => {
   if (saving || !editorToken) return;
   const forgotten = forgetToken(editorToken);
-  setFeedback(forgotten ? 'Token removed. Match entry is locked.' : 'Match entry is locked. Clear this site’s browser data to remove the saved token.');
+  setFeedback(forgotten ? 'Logged out.' : 'Logged out for this tab. Clear this site’s browser data to remove your saved login.');
   unlockEntry.focus();
 });
 goalsForm.addEventListener('submit', event => {
@@ -1004,6 +1062,12 @@ document.querySelector('#editor-form').addEventListener('submit', async event =>
   event.preventDefault();
   if (connecting) return;
   const token = editorTokenInput.value.trim();
+  if (!validEditorToken(token)) {
+    editorFeedback.textContent = 'That password didn’t work. Try again.';
+    editorFeedback.hidden = false;
+    editorTokenInput.focus();
+    return;
+  }
   const request = editorAction;
   connecting = true;
   connectEditor.disabled = true;
@@ -1019,13 +1083,13 @@ document.querySelector('#editor-form').addEventListener('submit', async event =>
     render();
     if (!draft) loadMatch(nextMatch());
     syncEntryAccess();
-    setFeedback(remembered ? '' : 'This browser could not store the token. Editing is unlocked in this tab only.');
+    setFeedback(remembered ? '' : 'This browser could not remember your login. Editing is unlocked in this tab only.');
     editorDialog.close();
     if (request) void request();
   } catch (error) {
     editorFeedback.textContent = tokenRejected(error)
-      ? 'GitHub rejected this token. Check its expiry and repository permissions.'
-      : 'Could not verify the token with GitHub. Try again.';
+      ? 'That password didn’t work. Try again.'
+      : 'Could not log in. Try again.';
     editorFeedback.hidden = false;
   } finally {
     connecting = false;
@@ -1161,9 +1225,9 @@ async function refreshResults() {
       if (!savedToken || version !== resultsVersion) throw error;
       if (tokenRejected(error)) {
         forgetToken(savedToken);
-        setFeedback('Your saved token was rejected. Enter a current token to edit matches.');
+        setFeedback('Your saved login expired or was rejected. Log in again to edit matches.');
       } else {
-        setFeedback('Could not check your saved token. Use Refresh results to try again.');
+        setFeedback('Could not check your saved login. Use Refresh results to try again.');
       }
       results = await readSharedResults();
     }
@@ -1204,6 +1268,10 @@ document.addEventListener('visibilitychange', () => {
 renderLocalHistory();
 renderSquad(squadStats);
 renderInjuries();
+const leaguePosition = document.querySelector('#league-position');
+if (leaguePosition) {
+  leaguePosition.classList.toggle('is-first', /^\s*(?:1st|first|1)\b/i.test(leaguePosition.textContent));
+}
 const leagueKickoff = document.querySelector('#league-fixture-kickoff');
 if (leagueKickoff && Date.parse(leagueKickoff.dateTime) <= Date.now()) {
   document.querySelector('#league-fixture-heading').textContent = 'Listed fixture';

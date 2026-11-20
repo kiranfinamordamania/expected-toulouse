@@ -92,7 +92,7 @@ button:disabled { opacity: .65; cursor: wait; }
   font-weight: 700;
   color: var(--muted);
 }
-.stat dd, #keeper-counter {
+.stat dd {
   font: 700 2.7rem/1 var(--display);
   font-variant-numeric: tabular-nums;
   color: var(--violet);
@@ -133,7 +133,7 @@ main.wrap { padding-block: 1.5rem 2.8rem; }
 .season-overview { border: 1px solid var(--line); border-radius: .8rem; background: #2b153fbb; padding-inline: clamp(.7rem, 2vw, 1.25rem); }
 .season-filter { padding-top: .75rem; }
 .season-filter select { min-height: 2.3rem; }
-.stat dd, #keeper-counter, .leader strong { color: var(--gold); }
+.stat dd, .leader strong { color: var(--gold); }
 .board {
   margin-top: 1.05rem;
   padding-inline: clamp(.7rem, 2vw, 1.25rem);
@@ -253,7 +253,7 @@ select:disabled { color: var(--muted); background: var(--wash); }
 .lineup-options input { width: 1.1rem; min-height: auto; height: 1.1rem; margin: 0; accent-color: var(--violet); }
 
 .match-entry .match-score { margin: .45rem 0 .65rem; }
-.match-score, .empty-log, .keeper-note, #no-goals {
+.match-score, .empty-log, #no-goals {
   color: var(--muted);
   font-size: .9375rem;
   line-height: 1.45;
@@ -288,11 +288,13 @@ tbody tr { border-bottom: 1px solid var(--line); }
 tbody tr:last-child { border-bottom: 0; }
 tbody th { text-align: left; padding: .72rem .75rem; }
 td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.squad-table thead th:first-child { width: 25%; }
-.squad-table thead th:nth-child(2) { width: 26%; }
-.squad-table thead th:nth-child(3) { width: 19%; }
-.squad-table thead th:nth-child(4) { width: 14%; }
+.squad-table thead th:first-child { width: 20%; }
+.squad-table thead th:nth-child(2) { width: 24%; }
+.squad-table thead th:nth-child(3) { width: 13%; }
+.squad-table thead th:nth-child(4) { width: 12%; }
+.squad-table thead th:nth-child(5) { width: 13%; }
 .squad-table tbody td:nth-child(2) { font-weight: 400; }
+.squad-table tbody td:last-child { color: var(--gold); }
 .squad-forever { margin: 1.2rem 0; border: 1px solid var(--line); background: var(--wash); }
 .squad-forever h3 { padding: .55rem .85rem; border-bottom: 1px solid var(--line); color: var(--dark-violet); font: 700 1.35rem/1.2 var(--display); }
 .forever-player { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .75rem .85rem; }
@@ -311,20 +313,6 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 .player { display: flex; align-items: center; gap: .45rem; line-height: 1.2; }
 .profile-link { border: 0; padding: .1rem 0; background: transparent; color: var(--violet); font-weight: 700; text-align: left; text-decoration: underline; text-underline-offset: .17em; }
 .profile-link:hover { color: var(--dark-violet); }
-.keeper-tag { color: var(--violet); font-size: .75rem; font-weight: 700; }
-.keeper-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-block: 1px solid var(--line);
-  padding: .85rem .75rem;
-  background: var(--wash);
-  font-weight: 700;
-}
-.keeper-note { padding: .8rem 0; }
-.keeper-matches { margin: 0; padding: 0 0 .85rem 1.2rem; }
-.keeper-matches li + li { margin-top: .3rem; }
 .save-note { padding: .75rem 0; border-top: 1px solid var(--line); color: var(--muted); font-size: .875rem; }
 
 #editor-dialog, #delete-dialog, #profile-dialog {
@@ -396,7 +384,8 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 
 @media (max-width: 42rem) {
   .wrap { width: calc(100% - 2rem); }
-  .squad-table th, .squad-table td { font-size: .8rem; padding-inline: .25rem; }
+  .squad-table th, .squad-table td { font-size: .75rem; padding-inline: .2rem; overflow-wrap: anywhere; }
+  .squad-table thead th:first-child { padding-left: .2rem; }
   .injuries-table th, .injuries-table td { font-size: .8rem; padding-inline: .3rem; }
   .injuries-table .secondary { padding-inline: .3rem; font-size: .75rem; }
   .masthead-inner { min-height: 0; }

@@ -1,6 +1,7 @@
 'use strict';
 
 const players = ['Zach', 'Boyce', 'Kiran', 'Ben 2', 'Billy', 'Potter', 'Will', 'James', 'Luca', 'Matty'];
+const goalkeeper = 'Zach';
 // Photo crops store the horizontal center, vertical center and rendered width as percentages.
 const playerProfiles = {
   Zach: {
@@ -354,7 +355,9 @@ function playerLabel(player, injury) {
 }
 
 function emptySquadStats() {
-  return new Map(players.map(player => [player, { played: 0, goals: 0, assists: 0, unknown: 0 }]));
+  return new Map(players.map(player => [player, {
+    played: 0, goals: 0, assists: 0, unknown: 0, cleanSheets: player === goalkeeper ? 0 : null
+  }]));
 }
 
 function renderProfile(player) {
@@ -492,8 +495,10 @@ function renderSquad(stats) {
     const { position, number } = playerProfiles[player];
     row.insertCell().textContent = position ?? '—';
     row.insertCell().textContent = number ?? '—';
-    row.insertCell().textContent = stats.get(player).goals;
-    row.insertCell().textContent = stats.get(player).assists;
+    const { goals, assists, cleanSheets } = stats.get(player);
+    row.insertCell().textContent = goals;
+    row.insertCell().textContent = assists;
+    row.insertCell().textContent = cleanSheets ?? '';
     rows.append(row);
   }
   document.querySelector('#players').replaceChildren(rows);
@@ -560,12 +565,12 @@ function render() {
   termFilter.value = activeTerm ?? '';
   const visibleMatches = activeTerm ? matches.filter(match => matchTerm(match) === activeTerm) : matches;
   const stats = emptySquadStats();
-  const keeperMatches = [];
+  const keeper = stats.get(goalkeeper);
   let goals = 0;
   for (const match of visibleMatches) {
     const participants = new Set(match.lineup);
     goals += match.team;
-    if (match.team > 0 && match.opponent === 0) keeperMatches.push(match);
+    if (match.opponent === 0) keeper.cleanSheets += 1;
     for (const goal of match.goals) {
       if (stats.has(goal.scorer)) {
         stats.get(goal.scorer).goals += 1;
@@ -583,13 +588,9 @@ function render() {
   }
   squadStats = stats;
   document.querySelector('#team-goals').textContent = goals;
-  document.querySelector('#team-clean-sheets').textContent = keeperMatches.length;
+  document.querySelector('#team-clean-sheets').textContent = keeper.cleanSheets;
   renderLeader(stats, 'goals', 'top-scorer', 'goal');
   renderLeader(stats, 'assists', 'top-assister', 'assist');
-  document.querySelector('#keeper-counter').textContent = keeperMatches.length;
-  const list = document.querySelector('#keeper-matches');
-  list.replaceChildren(...keeperMatches.map(match => element('li', `${matchTermLabel(match)} · ${scoreLine(match)}`)));
-  list.hidden = keeperMatches.length === 0;
   renderSquad(stats);
   if (profileDialog.open && openProfile) renderProfile(openProfile);
   if (commentsPlayer) renderManagerComments();

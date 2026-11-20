@@ -514,15 +514,17 @@ function scoreLine(match) {
   return `Expected Toulouse ${match.team}–${match.opponent} ${match.opponentName}`;
 }
 
-function matchContributions(goals) {
+function matchContributions(match) {
   const scorers = new Map();
   const assisters = new Map();
-  for (const { scorer, assist } of goals) {
+  for (const { scorer, assist } of match.goals) {
     scorers.set(scorer, (scorers.get(scorer) ?? 0) + 1);
     if (assist) assisters.set(assist, (assisters.get(assist) ?? 0) + 1);
   }
   const summary = element('dl', undefined, 'match-contributions');
-  for (const [label, counts, emptyText] of [['Goals', scorers, 'None'], ['Assists', assisters, 'None recorded']]) {
+  const groups = [['Goals', scorers, 'None']];
+  if (matchTerm(match) !== 1) groups.push(['Assists', assisters, 'None recorded']);
+  for (const [label, counts, emptyText] of groups) {
     const group = element('div');
     const value = element('dd');
     const entries = [...counts].sort(([first, firstCount], [second, secondCount]) =>
@@ -572,7 +574,7 @@ function renderHistory(container, records, editable = false) {
     remove.addEventListener('click', () => confirmDelete(match, !editable));
     actions.append(remove);
     top.append(actions);
-    card.append(top, matchContributions(match.goals));
+    card.append(top, matchContributions(match));
     cards.append(card);
   }
   container.replaceChildren(cards);
@@ -710,31 +712,36 @@ function fillAssists(select, scorer, selected) {
   select.value = Array.from(select.options).some(option => option.value === selected) ? selected : '';
 }
 
-function makeGoalFields(index, goal) {
+function makeGoalFields(index, goal, showAssists) {
   const group = element('fieldset', undefined, 'goal-row');
   group.append(element('legend', `Goal ${index + 1}`));
   const scorerLabel = element('label', 'Scorer');
-  const assistLabel = element('label', 'Assist');
   const scorer = element('select', undefined, 'scorer');
-  const assist = element('select', undefined, 'assist');
   scorer.setAttribute('aria-label', `Goal ${index + 1} scorer`);
-  assist.setAttribute('aria-label', `Goal ${index + 1} assist`);
   scorer.required = true;
   scorer.append(makeOption('Select scorer', ''), ...players.map(player => makeOption(player)), makeOption('Uncredited goal', uncredited));
   scorer.value = goal?.scorer ?? '';
-  fillAssists(assist, scorer.value, goal?.assist ?? '');
-  scorer.addEventListener('change', () => fillAssists(assist, scorer.value, assist.value));
   scorerLabel.append(scorer);
-  assistLabel.append(assist);
-  group.append(scorerLabel, assistLabel);
+  group.append(scorerLabel);
+  if (showAssists) {
+    const assistLabel = element('label', 'Assist');
+    const assist = element('select', undefined, 'assist');
+    assist.setAttribute('aria-label', `Goal ${index + 1} assist`);
+    fillAssists(assist, scorer.value, goal?.assist ?? '');
+    scorer.addEventListener('change', () => fillAssists(assist, scorer.value, assist.value));
+    assistLabel.append(assist);
+    group.append(assistLabel);
+  }
   return group;
 }
 
 function draftGoals() {
-  return Array.from(goalFields.children, group => ({
-    scorer: group.querySelector('.scorer').value,
-    assist: group.querySelector('.assist').value
-  }));
+  return Array.from(goalFields.children, (group, index) => {
+    const scorer = group.querySelector('.scorer').value;
+    const previous = draft.goals[index];
+    const previousAssist = previous?.scorer === scorer ? previous.assist : '';
+    return { scorer, assist: group.querySelector('.assist')?.value ?? previousAssist ?? '' };
+  });
 }
 
 function renderLineup(selected) {
@@ -819,7 +826,10 @@ scoreForm.addEventListener('submit', event => {
   const lineup = sameMatch ? draft.lineup : existing?.lineup ?? [];
   const managerComments = sameMatch ? draft.managerComments : existing?.managerComments ?? {};
   draft = { ...identity, team, opponent, opponentName, goals, lineup, managerComments, baseline: sameMatch ? draft.baseline : existing };
-  goalFields.replaceChildren(...Array.from({ length: team }, (_, index) => makeGoalFields(index, goals[index])));
+  const showAssists = identity.term !== 1;
+  goalFields.replaceChildren(...Array.from({ length: team }, (_, index) => makeGoalFields(index, goals[index], showAssists)));
+  document.querySelector('#lineup-help').textContent = 'Select everyone who took part. Leave blank if the lineup is unknown. '
+    + (showAssists ? 'Scorers and assisters count automatically.' : 'Scorers count automatically.');
   renderLineup(lineup);
   renderCommentFields(managerComments);
   document.querySelector('#match-score').textContent = `${matchTermLabel(draft)} · ${scoreLine(draft)}`;

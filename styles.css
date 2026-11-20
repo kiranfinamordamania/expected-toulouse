@@ -248,6 +248,7 @@ select:disabled { color: var(--muted); background: var(--wash); }
   border: 1px solid var(--line);
 }
 .goal-row legend { padding-inline: .28rem; color: var(--violet); font-weight: 700; font-size: .875rem; }
+.goal-row > label:only-of-type { grid-column: 1 / -1; }
 .match-lineup { border: 1px solid var(--line); margin: .85rem 0 0; padding: .6rem .75rem .7rem; }
 .match-lineup legend { color: var(--violet); font-weight: 700; padding-inline: .25rem; }
 .match-lineup p { color: var(--muted); font-size: .875rem; line-height: 1.4; }
@@ -521,6 +522,7 @@ main.wrap { padding-top: 1.35rem; }
   border-inline-start: 1px solid var(--line);
 }
 .match-contributions dt { color: var(--muted); font-size: .78rem; font-weight: 700; }
+.match-contributions > div:only-child { grid-column: 1 / -1; }
 .match-contributions dd { margin-top: .27rem; font-size: .9rem; line-height: 1.4; }
 .match-contributions ul { list-style: none; padding: 0; margin: 0; }
 .match-contributions li { display: inline-block; margin-inline-end: .7rem; }

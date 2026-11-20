@@ -389,6 +389,7 @@ function renderProfile(player) {
   shirtNumber.textContent = number == null ? '' : `Shirt number ${number}`;
   shirtNumber.hidden = number == null;
   document.querySelector('.profile-numbers').hidden = !stats;
+  document.querySelector('#profile-assists-stat').hidden = activeTerm === 1;
   if (stats) {
     document.querySelector('#profile-played').textContent = stats.played;
     document.querySelector('#profile-goals').textContent = stats.goals;
@@ -486,6 +487,8 @@ function renderInjuries() {
 }
 
 function renderSquad(stats) {
+  const showAssists = activeTerm !== 1;
+  document.querySelector('#squad-assists-heading').hidden = !showAssists;
   const rows = document.createDocumentFragment();
   for (const player of squadDisplayOrder) {
     const row = element('tr');
@@ -500,7 +503,7 @@ function renderSquad(stats) {
     const { played, goals, assists, cleanSheets } = stats.get(player);
     row.insertCell().textContent = played;
     row.insertCell().textContent = goals;
-    row.insertCell().textContent = assists;
+    if (showAssists) row.insertCell().textContent = assists;
     row.insertCell().textContent = cleanSheets ?? '';
     rows.append(row);
   }
@@ -628,6 +631,7 @@ function render() {
   squadStats = stats;
   document.querySelector('#team-goals').textContent = goals;
   renderLeader(stats, 'goals', 'top-scorer', 'goal');
+  document.querySelector('#top-assister-stat').hidden = activeTerm === 1;
   renderLeader(stats, 'assists', 'top-assister', 'assist');
   renderSquad(stats);
   if (profileDialog.open && openProfile) renderProfile(openProfile);

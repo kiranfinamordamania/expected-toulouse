@@ -84,6 +84,7 @@ button:disabled { opacity: .65; cursor: wait; }
   grid-template-columns: repeat(3, minmax(0, 1fr));
   padding-block: 1.2rem;
 }
+.stats-strip:has(#top-assister-stat[hidden]) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .stats-strip > div { min-width: 0; padding: 0 1.1rem; border-inline-start: 1px solid var(--line); }
 .stats-strip > div:first-child { padding-inline-start: 0; border-inline-start: 0; }
 .stats-strip dt {
@@ -291,6 +292,9 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 .squad-table thead th:nth-child(3) { width: 15%; }
 .squad-table thead th:nth-child(4) { width: 11%; }
 .squad-table thead th:nth-child(5) { width: 12%; }
+.squad-table:has(#squad-assists-heading[hidden]) thead th:first-child { width: 30%; }
+.squad-table:has(#squad-assists-heading[hidden]) thead th:nth-child(2) { width: 24%; }
+.squad-table:has(#squad-assists-heading[hidden]) thead th:nth-child(4) { width: 14%; }
 .squad-table tbody td:nth-child(2) { font-weight: 400; }
 .appearances-short { display: none; }
 .squad-forever { margin: 1.2rem 0; border: 1px solid var(--line); background: var(--wash); }
@@ -348,6 +352,7 @@ td { padding: .72rem .25rem; font-weight: 700; font-variant-numeric: tabular-num
 .profile-portrait span { height: 100%; display: grid; place-items: center; background: var(--wash); color: var(--violet); font: 700 2rem/1 var(--display); }
 .profile-numbers, .profile-details { display: grid; gap: .65rem; border-top: 1px solid var(--line); padding-top: .85rem; margin-top: .9rem; }
 .profile-numbers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.profile-numbers:has(#profile-assists-stat[hidden]) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .profile-details { grid-template-columns: 1fr 1fr; }
 .profile-numbers dt, .profile-details dt { font-size: .875rem; color: var(--muted); }
 .profile-numbers dd { color: var(--violet); font: 700 2rem/1.2 var(--display); }

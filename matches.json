@@ -39,6 +39,32 @@
       }
     },
     {
+      "term": 2,
+      "competition": "cup",
+      "week": 1,
+      "team": 1,
+      "opponent": 2,
+      "opponentName": "testing",
+      "goals": [
+        {
+          "scorer": "Billy",
+          "assist": ""
+        }
+      ],
+      "lineup": [
+        "Zach",
+        "Boyce",
+        "Kiran",
+        "Ben 2",
+        "Billy",
+        "Potter",
+        "Will",
+        "James",
+        "Luca",
+        "Matty"
+      ]
+    },
+    {
       "term": 1,
       "competition": "league",
       "week": 6,

@@ -61,7 +61,7 @@ const playerProfiles = {
     bio: 'Hunger, desire and high energy. Questionable on the ball',
     similarPlayer: 'Joe Allen'
   },
-  James: { number: 53, position: 'Forward', photo: './photos/james.webp', photoCrop: [50.19, 32.1, 284.21], bio: 'Lack of commitment, always partying.', similarPlayer: 'Joey Barton' },
+  James: { number: 16, position: 'Forward', photo: './photos/james.webp', photoCrop: [50.19, 32.1, 284.21], bio: 'Lack of commitment, always partying.', similarPlayer: 'Joey Barton' },
   Luca: {
     number: 7,
     position: 'Midfielder',

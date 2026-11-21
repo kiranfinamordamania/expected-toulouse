@@ -100,6 +100,14 @@ button:disabled { opacity: .65; cursor: wait; }
   font-variant-numeric: tabular-nums;
   color: var(--violet);
 }
+.goal-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .18rem .65rem;
+  margin-top: .25rem;
+  color: var(--muted);
+  font: 400 .8125rem/1.35 "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
 .leader strong {
   display: block;
   color: var(--violet);

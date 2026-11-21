@@ -611,10 +611,12 @@ function render() {
   const stats = emptySquadStats();
   const keeper = stats.get(goalkeeper);
   let points = 0;
-  let goals = 0;
+  let goalsScored = 0;
+  let goalsConceded = 0;
   for (const match of visibleMatches) {
     const participants = new Set(match.lineup);
-    goals += match.team;
+    goalsScored += match.team;
+    goalsConceded += match.opponent;
     if (matchCompetition(match) === 'league') {
       points += match.team > match.opponent ? 3 : match.team === match.opponent ? 1 : 0;
     }
@@ -637,7 +639,10 @@ function render() {
   squadStats = stats;
   document.querySelector('#team-points-stat').hidden = activeTerm === undefined;
   document.querySelector('#team-points').textContent = points;
-  document.querySelector('#team-goals').textContent = goals;
+  const goalDifference = goalsScored - goalsConceded;
+  document.querySelector('#team-goal-difference').textContent = goalDifference > 0 ? `+${goalDifference}` : String(goalDifference);
+  document.querySelector('#team-goals-scored').textContent = goalsScored;
+  document.querySelector('#team-goals-conceded').textContent = goalsConceded;
   renderLeader(stats, 'goals', 'top-scorer', 'goal');
   document.querySelector('#top-assister-stat').hidden = activeTerm === 1;
   renderLeader(stats, 'assists', 'top-assister', 'assist');

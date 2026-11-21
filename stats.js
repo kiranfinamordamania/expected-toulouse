@@ -610,10 +610,14 @@ function render() {
   const visibleMatches = matchesForActiveTerm();
   const stats = emptySquadStats();
   const keeper = stats.get(goalkeeper);
+  let points = 0;
   let goals = 0;
   for (const match of visibleMatches) {
     const participants = new Set(match.lineup);
     goals += match.team;
+    if (matchCompetition(match) === 'league') {
+      points += match.team > match.opponent ? 3 : match.team === match.opponent ? 1 : 0;
+    }
     if (match.opponent === 0) keeper.cleanSheets += 1;
     for (const goal of match.goals) {
       if (stats.has(goal.scorer)) {
@@ -631,6 +635,8 @@ function render() {
     }
   }
   squadStats = stats;
+  document.querySelector('#team-points-stat').hidden = activeTerm === undefined;
+  document.querySelector('#team-points').textContent = points;
   document.querySelector('#team-goals').textContent = goals;
   renderLeader(stats, 'goals', 'top-scorer', 'goal');
   document.querySelector('#top-assister-stat').hidden = activeTerm === 1;

@@ -84,9 +84,11 @@ button:disabled { opacity: .65; cursor: wait; }
   grid-template-columns: repeat(3, minmax(0, 1fr));
   padding-block: 1.2rem;
 }
-.stats-strip:has(#top-assister-stat[hidden]) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stats-strip:has(#team-points-stat:not([hidden])):has(#top-assister-stat:not([hidden])) {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
 .stats-strip > div { min-width: 0; padding: 0 1.1rem; border-inline-start: 1px solid var(--line); }
-.stats-strip > div:first-child { padding-inline-start: 0; border-inline-start: 0; }
+.stats-strip > div:nth-child(1 of :not([hidden])) { padding-inline-start: 0; border-inline-start: 0; }
 .stats-strip dt {
   margin-bottom: .3rem;
   font-size: .875rem;
@@ -584,6 +586,14 @@ thead { background: #352344; }
   .league-highlight { font-size: 1.48rem; }
   .season-filter { padding-top: 0; }
   .stats-strip { padding-block: .9rem .25rem; }
+  .stats-strip:has(#team-points-stat:not([hidden])):has(#top-assister-stat:not([hidden])) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: .5rem;
+  }
+  .stats-strip:has(#team-points-stat:not([hidden])):has(#top-assister-stat:not([hidden])) > .leader:nth-child(3) {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
   .stat dd { font-size: 2.35rem; }
   .leader strong { font-size: 1.67rem; }
   .result-score { min-width: 3.4rem; padding-inline-end: .56rem; font-size: 2.3rem; }

@@ -1,6 +1,26 @@
 {
   "matches": [
     {
+      "term": 1,
+      "competition": "league",
+      "week": 6,
+      "team": 0,
+      "opponent": 0,
+      "opponentName": "test",
+      "goals": [],
+      "lineup": [
+        "Zach",
+        "Kiran",
+        "Ben 2",
+        "Billy",
+        "Potter",
+        "Will",
+        "James",
+        "Luca",
+        "Matty"
+      ]
+    },
+    {
       "week": 5,
       "team": 4,
       "opponent": 1,
